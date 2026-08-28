@@ -24,6 +24,15 @@
   --shadow-cdp-neu-raised-lg: -10px -10px 30px 0 #ffffff, 10px 10px 30px 0 rgb(0 0 0 / 0.3);
   --shadow-cdp-neu-inset:
     inset -5px -5px 10px 0 rgb(255 255 255 / 0.5), inset 5px 5px 10px 0 rgb(0 0 0 / 0.1);
+
+  /* The same pair on the viewer's dark slate. A full-strength white highlight
+     blows out against slate, so both halves drop to a tenth. */
+  --shadow-cdp-neu-dark-raised:
+    -5px -5px 15px 0 rgb(255 255 255 / 0.1), 5px 5px 15px 0 rgb(0 0 0 / 0.25);
+  --shadow-cdp-neu-dark-inset:
+    inset -10px -10px 25px 0 rgb(255 255 255 / 0.1), inset 10px 10px 25px 0 rgb(0 0 0 / 0.25);
+  --shadow-cdp-neu-dark-inset-sm:
+    inset -5px -5px 15px 0 rgb(255 255 255 / 0.1), inset 5px 5px 15px 0 rgb(0 0 0 / 0.25);
 }
 
 /* Root surface for every screen in this case. Sets what a host app would
