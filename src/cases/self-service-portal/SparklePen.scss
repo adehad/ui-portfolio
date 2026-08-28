@@ -1,0 +1,103 @@
+/* Every class here carries the ssp- prefix, so these rules are safe outside
+   .ssp-root and the component works wherever it is mounted. --ssp-spark comes
+   from the theme block; the currentColor fallback covers a host without one. */
+
+.ssp-sparkle-host {
+  position: relative;
+  display: block;
+
+  /* Route-preview segments sit inside a <code> line and have to stay in flow. */
+  &.ssp-sparkle-inline {
+    display: inline-block;
+  }
+
+  /* Anchors the stars to the control they mark, so stacked pens still read as
+     one glow per new element. Static, so reduced motion keeps it. */
+  &.ssp-sparkle-active {
+    border-radius: 4px;
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--ssp-spark) 55%, transparent),
+      0 0 10px color-mix(in srgb, var(--ssp-spark) 35%, transparent);
+  }
+}
+
+/* z-index -1 puts the field behind the box content, so the select's own opaque
+   background lets only the halo show around the edges. The host creates no
+   stacking context, so the select menu still layers normally. */
+.ssp-particle-pen {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 130%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  transform-origin: center;
+  filter: hue-rotate(calc(var(--ssp-spark-i, 0) * 47deg));
+  mask: radial-gradient(white, transparent 65%);
+  -webkit-mask: radial-gradient(white, transparent 65%);
+  pointer-events: none;
+  z-index: -1;
+  overflow: visible;
+}
+
+.ssp-particle {
+  position: absolute;
+  top: calc(var(--ssp-y) * 1%);
+  left: calc(var(--ssp-x) * 1%);
+  width: calc(var(--ssp-size) * 1rem);
+  aspect-ratio: 1;
+  opacity: var(--ssp-alpha);
+  transform-origin: var(--ssp-origin-x) var(--ssp-origin-y);
+  animation: ssp-spark-float calc(var(--ssp-duration) * 1s) calc(var(--ssp-delay) * -1s) infinite
+    linear;
+
+  &:nth-of-type(even) {
+    animation-direction: reverse;
+  }
+
+  path {
+    fill: var(--ssp-spark, currentColor);
+    /* fill-box pivots the twinkle on the star itself rather than on the orbit
+       origin the outer svg rotates around. */
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: ssp-spark-twinkle calc(var(--ssp-twinkle-duration, 2) * 1s)
+      calc(var(--ssp-twinkle-delay, 0) * -1s) infinite ease-in-out;
+  }
+}
+
+@keyframes ssp-spark-float {
+  to {
+    rotate: 360deg;
+  }
+}
+
+@keyframes ssp-spark-twinkle {
+  0%,
+  100% {
+    scale: 0.6;
+  }
+  50% {
+    scale: 1.2;
+  }
+}
+
+/* The class comes from matchMedia so a test can assert it; the media query below
+   is the fallback for anything that renders without the JS check. */
+.ssp-particle-pen.ssp-reduced-motion .ssp-particle {
+  animation: none;
+
+  path {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ssp-particle {
+    animation: none;
+
+    path {
+      animation: none;
+    }
+  }
+}

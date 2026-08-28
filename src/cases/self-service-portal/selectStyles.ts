@@ -1,20 +1,29 @@
 import type { ClassNamesConfig, StylesConfig } from "react-select";
-import type { Option } from "@/cases/self-service-portal/types";
 
-export const selectClassNames: ClassNamesConfig<Option, boolean> = {
-  control: (state) => {
-    const isFocused = state.isFocused
-      ? "ssp-user-select ssp-user-select-focused"
-      : "ssp-user-select";
-    const isDisabled = state.isDisabled ? "ssp-user-select-disabled" : "";
-    return `${isFocused} ${isDisabled}`;
-  },
-};
+/** The source names a `user-select` class and two `border-*` colour utilities,
+    none of which exist in its own stylesheets. Tailwind scans this case's .tsx, so
+    leaving them would mint a real red-border utility and put a red border on a
+    focused dropdown the source never had. */
+export function getSelectClassNames<OptionType, IsMulti extends boolean>(): ClassNamesConfig<
+  OptionType,
+  IsMulti
+> {
+  return {
+    control: (state) => {
+      const focus = state.isFocused ? "ssp-user-select ssp-user-select-focused" : "ssp-user-select";
+      const disabled = state.isDisabled ? "ssp-user-select-disabled" : "";
+      return `${focus} ${disabled}`;
+    },
+  };
+}
 
-/** react-select emits its styles as inline style objects. A custom property reference
-    survives that, so the whole control repaints on a theme change with no re-render.
-    isDarkMode is only needed where a value is picked rather than referenced. */
-export function getSelectStyles(isDarkMode: boolean): StylesConfig<Option, boolean> {
+/** react-select emits its styles as inline style objects. A custom property
+    reference survives that, so the whole control repaints on a theme change with
+    no re-render. isDarkMode is only needed where a value is picked rather than
+    referenced. */
+export function getSelectStyles<OptionType, IsMulti extends boolean>(
+  isDarkMode?: boolean,
+): StylesConfig<OptionType, IsMulti> {
   return {
     menuList: (base) => ({
       ...base,

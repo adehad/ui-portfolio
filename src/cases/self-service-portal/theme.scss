@@ -14,6 +14,20 @@
   flex-direction: column;
   min-height: 100dvh;
 
+  /* The sparkle overlay is absolutely positioned, but an absolutely positioned box
+     still counts toward the scrollable overflow of its ancestors, and the field is
+     wider than the control it marks. Clipping the horizontal axis drops that
+     contribution without making this a scroll container, so a select menu still
+     opens past the bottom edge. */
+  overflow-x: clip;
+
+  /* The sparkle overlay sits at z-index -1, which without a stacking context here
+     would paint it behind this background rather than behind the control it marks.
+     The context has to be on this element and not on the overlay's own host: a
+     host that formed one would trap the select menu's z-index inside it, and the
+     next control's opaque background would paint over the open menu. */
+  isolation: isolate;
+
   background-color: var(--ssp-bkg);
   color: var(--ssp-font-color);
   font-family:
@@ -40,6 +54,10 @@
     --ssp-disabled-bkg: #c2c2c2;
     --ssp-tooltip-bkg: #696969;
     --ssp-input-border: #a6c5e229;
+    /* Sparkle fill: a warm gold reads as magic on the light canvas. */
+    --ssp-spark: #c9a227;
+    /* Validation errors: a deep red for white backgrounds. */
+    --ssp-error-color: #d32f2f;
 
     color-scheme: light;
   }
@@ -60,6 +78,11 @@
     --ssp-disabled-border: rgb(80, 80, 80);
     --ssp-tooltip-bkg: #9fadbc;
     --ssp-input-border: #a6c5e229;
+    /* Sparkle fill: a bright cyan glows against the dark canvas. */
+    --ssp-spark: #7fdcff;
+    /* Validation errors: pure red is about 3.9:1 against #1d2125, this salmon
+       reads at about 8:1 and is still unmistakably an error. */
+    --ssp-error-color: #f28b82;
 
     color-scheme: dark;
   }

@@ -1,60 +1,71 @@
-import type { FieldProps } from "formik";
-import { useMemo } from "react";
-import Select, { type MultiValue, type SingleValue } from "react-select";
-import { getSelectStyles, selectClassNames } from "@/cases/self-service-portal/selectStyles";
+import { useId, useMemo } from "react";
+import Select from "react-select";
+import { FieldErrors } from "@/cases/self-service-portal/FieldErrors";
+import { getSelectClassNames, getSelectStyles } from "@/cases/self-service-portal/selectStyles";
 import type { Option } from "@/cases/self-service-portal/types";
+import { useFieldContext } from "@/cases/self-service-portal/useFormContext";
 
-export type UserSelectProps = FieldProps & {
+export type UserSelectProps = {
+  label: string;
   options: Option[];
   isMulti?: boolean;
-  className?: string;
-  placeholder?: string;
   isDarkMode?: boolean;
   disabled?: boolean;
+  placeholder?: string;
 };
 
 export function UserSelect({
-  placeholder,
-  field,
-  form,
+  label,
   options,
   isMulti = false,
-  isDarkMode = false,
+  isDarkMode,
   disabled,
+  placeholder,
 }: UserSelectProps) {
-  const styles = useMemo(() => getSelectStyles(isDarkMode), [isDarkMode]);
+  const field = useFieldContext<string | string[]>();
+  // The source wraps the control in the <label>. jsx-a11y/label-has-associated-control
+  // cannot see the input react-select renders, so the association is explicit.
+  const inputId = useId();
+  const classNames = useMemo(() => getSelectClassNames<Option, boolean>(), []);
+  const styles = useMemo(() => getSelectStyles<Option, boolean>(isDarkMode), [isDarkMode]);
 
-  const onChange = (option: MultiValue<Option> | SingleValue<Option>) => {
-    void form.setFieldValue(
-      field.name,
+  const onChange = (option: unknown) => {
+    field.handleChange(
       isMulti
-        ? (option as MultiValue<Option>).map((item) => item.value)
-        : ((option as SingleValue<Option>)?.value ?? ""),
+        ? (option as Option[]).map((item) => item.value)
+        : ((option as Option | null)?.value ?? ""),
     );
   };
 
   const getValue = () => {
-    if (!options) return isMulti ? [] : null;
-
     if (isMulti) {
-      const selected = (field.value as string[] | undefined) ?? [];
+      const selected = (field.state.value as string[] | undefined) ?? [];
       return options.filter((option) => selected.includes(option.value));
     }
-
-    return field.value === "" ? null : (options.find((o) => o.value === field.value) ?? null);
+    return field.state.value === ""
+      ? null
+      : (options.find((option) => option.value === field.state.value) ?? null);
   };
 
   return (
-    <Select<Option, boolean>
-      classNames={selectClassNames}
-      name={field.name}
-      value={getValue()}
-      onChange={onChange}
-      placeholder={placeholder}
-      options={options}
-      isMulti={isMulti}
-      isDisabled={disabled}
-      styles={styles}
-    />
+    <div>
+      <div className="ssp-mb-1">
+        <label htmlFor={inputId}>{label}</label>
+      </div>
+      <Select<Option, boolean>
+        inputId={inputId}
+        classNames={classNames}
+        name={field.name}
+        value={getValue()}
+        onChange={onChange}
+        onBlur={field.handleBlur}
+        placeholder={placeholder}
+        options={options}
+        isMulti={isMulti}
+        isDisabled={disabled}
+        styles={styles}
+      />
+      <FieldErrors />
+    </div>
   );
 }

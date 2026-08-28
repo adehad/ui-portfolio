@@ -19,12 +19,11 @@
     "@fontsource/open-sans": "^5.3.0",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
-    "formik": "^2.4.9",
+    "@tanstack/react-form": "^1.33.5",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-select": "^5.10.2",
     "three": "^0.185.1",
-    "yup": "^1.7.1",
     "zustand": "^5.0.14"
   },
   "devDependencies": {
