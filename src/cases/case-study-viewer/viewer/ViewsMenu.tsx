@@ -27,7 +27,7 @@ export function ViewsMenu({ cameraViews }: { cameraViews: CameraView[] }) {
         aria-expanded={open}
         aria-haspopup="menu"
         onClick={() => setOpen((v) => !v)}
-        className="flex cursor-pointer items-center gap-2 rounded-[15px] bg-white/10 px-4 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/20"
+        className="cdp-glass flex h-cdp-touch-comfort cdp-pressable cursor-pointer items-center gap-2 rounded-cdp-xl px-4 text-cdp-body font-semibold text-cdp-fg"
       >
         {active ? active.name : "Views"}
         <svg
@@ -44,7 +44,7 @@ export function ViewsMenu({ cameraViews }: { cameraViews: CameraView[] }) {
         </svg>
       </button>
       {open && (
-        <ul className="absolute top-11 right-0 z-20 w-44 overflow-hidden rounded-[15px] bg-cdp-slate-dark/95 py-1 shadow-cdp-neu-dark-raised backdrop-blur-sm">
+        <ul className="absolute top-[68px] right-0 cdp-glass z-20 w-52 overflow-hidden rounded-cdp-2xl p-1">
           {options.map((opt) => {
             const isActive = (activeCameraViewId ?? null) === opt.id;
             return (
@@ -54,8 +54,8 @@ export function ViewsMenu({ cameraViews }: { cameraViews: CameraView[] }) {
                     setCameraView(opt.id);
                     setOpen(false);
                   }}
-                  className={`flex w-full cursor-pointer items-center justify-between px-4 py-2.5 text-left text-sm transition ${
-                    isActive ? "font-semibold text-cdp-blue" : "text-white/80 hover:bg-white/10"
+                  className={`flex min-h-cdp-touch w-full cdp-pressable cursor-pointer items-center justify-between rounded-cdp-lg px-4 text-left text-cdp-body ${
+                    isActive ? "font-semibold text-cdp-sector-fg" : "text-cdp-fg-muted"
                   }`}
                 >
                   {opt.name}

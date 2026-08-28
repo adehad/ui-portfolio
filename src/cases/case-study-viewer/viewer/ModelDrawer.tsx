@@ -21,14 +21,15 @@ export function ModelDrawer({
   const [open, setOpen] = useState(true);
 
   return (
-    // Starts below the panel's top control row so an open drawer never
-    // intercepts the info, views and refresh clicks.
-    <div className="absolute top-24 right-0 bottom-6 z-10 flex items-center">
+    // The handle sits on the panel's right edge rather than inset from it, so
+    // it reads as something to pull the drawer in from. inset-y-6 keeps it
+    // clear of the rounded corners at any panel height.
+    <div className="absolute inset-y-6 right-0 z-10 flex items-center justify-end">
       <button
         aria-label={open ? "Hide models" : "Show models"}
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="flex h-24 w-9 cursor-pointer items-center justify-center rounded-l-[15px] bg-cdp-slate-dark text-white/70 shadow-cdp-neu-dark-raised transition hover:text-white"
+        className="cdp-glass flex h-28 w-cdp-touch shrink-0 cdp-pressable cursor-pointer items-center justify-center rounded-l-cdp-xl text-cdp-fg-muted"
       >
         <svg
           viewBox="0 0 24 24"
@@ -43,9 +44,14 @@ export function ModelDrawer({
           <path d="m9 6 6 6-6 6" />
         </svg>
       </button>
+      {/* border-0 while collapsed is load-bearing: cdp-glass carries a 1px
+          border per side, so a w-0 panel is still 2px wide and pushes the
+          handle off the right edge by that sliver. */}
       <div
-        className={`flex h-full flex-col items-center gap-6 overflow-y-auto rounded-l-[30px] bg-cdp-slate px-6 py-6 shadow-cdp-neu-dark-inset transition-all duration-300 ${
-          open ? "w-[184px] opacity-100" : "pointer-events-none w-0 px-0 opacity-0"
+        className={`cdp-glass flex max-h-full flex-col items-center gap-4 overflow-y-auto overscroll-contain rounded-l-cdp-2xl transition-[width,opacity,padding] duration-300 ${
+          open
+            ? "w-cdp-drawer px-4 py-4 opacity-100"
+            : "pointer-events-none w-0 border-0 px-0 py-0 opacity-0"
         }`}
       >
         {caseStudy.modelViews.map((mv) => {
@@ -57,17 +63,17 @@ export function ModelDrawer({
               onClick={() => setModelView(mv.id)}
               aria-pressed={active}
               aria-label={mv.name}
-              className={`flex size-[130px] shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-[20px] p-2 transition ${
-                active
-                  ? "bg-cdp-slate-dark shadow-cdp-neu-dark-inset-sm"
-                  : "bg-cdp-slate shadow-cdp-neu-dark-raised"
+              className={`flex size-[136px] shrink-0 cdp-pressable cursor-pointer items-center justify-center overflow-hidden rounded-cdp-xl border p-2 ${
+                active ? "border-cdp-sector bg-cdp-sector-tint" : "border-cdp-line bg-cdp-surface-2"
               }`}
             >
               {preview ? (
                 <img src={preview} alt={mv.name} className="size-full object-contain" />
               ) : (
                 <span
-                  className={`text-center text-sm font-semibold ${active ? "text-white" : "text-white/70"}`}
+                  className={`text-center text-cdp-caption font-semibold ${
+                    active ? "text-cdp-fg" : "text-cdp-fg-muted"
+                  }`}
                 >
                   {mv.name}
                 </span>

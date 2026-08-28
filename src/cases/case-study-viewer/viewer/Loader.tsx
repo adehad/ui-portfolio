@@ -1,9 +1,19 @@
 import { Html } from "@react-three/drei";
 import { useMemo } from "react";
+import type { Camera, Object3D } from "three";
 import { useModelLoadProgress } from "./useModelLoadProgress";
 
 function formatMb(bytes: number): string {
   return `${(bytes / 1e6).toFixed(1)}`;
+}
+
+/**
+ * <Html> normally projects the scene position it is mounted at. This model's
+ * world origin sits below the eye, so the projected panel reads low in the
+ * frame; pin it to the middle of the canvas instead.
+ */
+function centreOfCanvas(_el: Object3D, _camera: Camera, size: { width: number; height: number }) {
+  return [size.width / 2, size.height / 2];
 }
 
 /**
@@ -17,21 +27,24 @@ export function Loader({ src }: { src: string }) {
   const barStyle = useMemo(() => ({ width: `${pct ?? 5}%` }), [pct]);
 
   return (
-    <Html center>
-      <div className="w-56 text-center text-white">
+    <Html center calculatePosition={centreOfCanvas}>
+      <div className="w-64 text-center text-cdp-fg">
         {downloaded ? (
           <>
-            <div className="h-1.5 w-full overflow-hidden rounded-sm bg-white/10">
-              <div className="h-full w-1/3 animate-pulse rounded-sm bg-cdp-blue" />
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-cdp-surface-3">
+              <div className="h-full w-1/3 animate-pulse rounded-full bg-cdp-sector" />
             </div>
-            <p className="mt-2 text-xs text-white/70">Preparing model…</p>
+            <p className="mt-2 text-cdp-caption text-cdp-fg-muted">Preparing model…</p>
           </>
         ) : (
           <>
-            <div className="h-1.5 w-full overflow-hidden rounded-sm bg-white/10">
-              <div className="h-full rounded-sm bg-cdp-blue transition-all" style={barStyle} />
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-cdp-surface-3">
+              <div
+                className="h-full rounded-full bg-cdp-sector transition-[width]"
+                style={barStyle}
+              />
             </div>
-            <p className="mt-2 text-xs text-white/70 tabular-nums">
+            <p className="mt-2 text-cdp-caption text-cdp-fg-muted tabular-nums">
               {totalBytes
                 ? `${formatMb(loadedBytes)} / ${formatMb(totalBytes)} MB`
                 : `${formatMb(loadedBytes)} MB`}

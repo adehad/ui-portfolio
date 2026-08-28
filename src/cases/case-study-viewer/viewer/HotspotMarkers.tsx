@@ -12,18 +12,30 @@ export function HotspotMarkers({ hotspots }: { hotspots: Hotspot[] }) {
     <>
       {hotspots.map((h) => (
         <Html key={h.id} position={h.position} center zIndexRange={ZINDEX_RANGE}>
+          {/* The dot stays 24px so it does not obscure the geometry it marks;
+              padding plus a negative margin give it a 44px hit area without
+              moving it. */}
           <button
             aria-label={h.title}
             aria-expanded={openId === h.id}
             onClick={() => openHotspot(openId === h.id ? null : h.id)}
-            className="h-6 w-6 cursor-pointer rounded-full border-2 border-white bg-black/70 text-xs font-bold text-white"
+            className="-m-2.5 flex size-cdp-touch cursor-pointer items-center justify-center p-2.5"
           >
-            +
+            <span
+              aria-hidden
+              className={`flex size-6 items-center justify-center rounded-full border-2 border-cdp-fg text-cdp-caption font-semibold transition-colors ${
+                openId === h.id
+                  ? "bg-cdp-sector text-cdp-slate-dark"
+                  : "bg-cdp-surface-0/80 text-cdp-fg"
+              }`}
+            >
+              +
+            </span>
           </button>
           {openId === h.id && (
-            <div className="absolute top-0 left-8 w-56 rounded-xl bg-white p-3 text-black shadow-xl">
-              <p className="text-sm font-bold">{h.title}</p>
-              <p className="mt-1 text-xs">{h.body}</p>
+            <div className="absolute top-0 left-9 cdp-glass w-64 rounded-cdp-2xl p-4 text-cdp-fg">
+              <p className="text-cdp-body font-semibold">{h.title}</p>
+              <p className="mt-1 text-cdp-caption leading-relaxed text-cdp-fg-muted">{h.body}</p>
             </div>
           )}
         </Html>

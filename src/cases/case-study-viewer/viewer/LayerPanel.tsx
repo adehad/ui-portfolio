@@ -8,8 +8,10 @@ export function LayerPanel({ modelView }: { modelView: ModelView }) {
   if (!modelView.layers.length) return null;
 
   return (
-    <div className="pointer-events-auto flex flex-col gap-2 rounded-[20px] bg-cdp-slate-dark/85 p-3 shadow-cdp-neu-dark-raised backdrop-blur-sm">
-      <p className="text-xs tracking-widest text-white/50 uppercase">Layers</p>
+    <div className="pointer-events-auto cdp-glass flex w-56 flex-col gap-1 rounded-cdp-2xl p-3">
+      <p className="px-3 py-2 text-cdp-caption font-semibold tracking-[0.14em] text-cdp-fg-subtle uppercase">
+        Layers
+      </p>
       {modelView.layers.map((layer) => {
         const ghosted = ghostedLayerIds.includes(layer.id);
         return (
@@ -17,11 +19,21 @@ export function LayerPanel({ modelView }: { modelView: ModelView }) {
             key={layer.id}
             aria-pressed={ghosted}
             onClick={() => toggleLayer(layer.id)}
-            className={`cursor-pointer rounded-lg px-3 py-1.5 text-left text-sm transition ${
-              ghosted ? "text-white/40 line-through" : "text-white hover:bg-white/10"
+            className={`flex min-h-cdp-touch cdp-pressable cursor-pointer items-center justify-between gap-3 rounded-cdp-xl border px-3 text-left text-cdp-body ${
+              ghosted
+                ? "border-cdp-line bg-transparent text-cdp-fg-subtle"
+                : "border-cdp-line bg-cdp-surface-2 text-cdp-fg"
             }`}
           >
             {layer.label}
+            {/* State carried by a filled or hollow dot as well as by colour;
+                a strikethrough on its own reads as disabled. */}
+            <span
+              aria-hidden
+              className={`size-3 shrink-0 rounded-full border ${
+                ghosted ? "border-cdp-fg-subtle" : "border-cdp-sector bg-cdp-sector"
+              }`}
+            />
           </button>
         );
       })}

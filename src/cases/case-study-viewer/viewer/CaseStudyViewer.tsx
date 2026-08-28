@@ -1,11 +1,11 @@
 import { useGLTF } from "@react-three/drei";
 import { useEffect, useState } from "react";
-import backButton from "@/cases/case-study-viewer/brand/back-button.svg";
-import refreshIcon from "@/cases/case-study-viewer/brand/icon-refresh.svg";
 import watermark from "@/cases/case-study-viewer/brand/cdp-watermark.svg";
+import { TouchGestureGuard } from "@/cases/case-study-viewer/TouchGestureGuard";
 import { modelUrl } from "./content";
 import { LayerPanel } from "./LayerPanel";
 import { ModelDrawer } from "./ModelDrawer";
+import { sectorStyle } from "./theme";
 import type { CaseStudyRef } from "./types";
 import { useViewerStore } from "./useViewerStore";
 import { ViewerCanvas } from "./ViewerCanvas";
@@ -35,17 +35,28 @@ export function CaseStudyViewer({ refData }: { refData: CaseStudyRef }) {
   const clearFailedLoad = () => useGLTF.clear(modelUrl(modelView.src));
 
   return (
-    <main className="flex h-dvh min-h-dvh flex-col gap-5 bg-cdp-slate p-7 pt-6 cdp-root scheme-dark">
-      <header className="flex items-center gap-6">
+    <main
+      style={sectorStyle(sector.id)}
+      className="flex h-dvh min-h-dvh flex-col gap-5 bg-cdp-surface-0 cdp-safe cdp-root"
+    >
+      <TouchGestureGuard />
+      <header className="flex items-center gap-5">
         <button
           aria-label={`Back to ${sector.name}`}
-          className="relative block size-[67px] shrink-0 cursor-pointer"
+          className="flex size-cdp-touch-comfort shrink-0 cdp-pressable cursor-pointer items-center justify-center rounded-cdp-xl border border-cdp-line bg-cdp-surface-2 text-cdp-fg"
         >
-          {/* Baked tile export from Figma (chevron, tile and soft shadows);
-              the SVG canvas bleeds past the 67px tile for the shadow. */}
-          <img src={backButton} alt="" className="absolute inset-[-12%] size-[124%] max-w-none" />
+          <svg viewBox="0 0 24 24" className="size-6" fill="none" aria-hidden="true">
+            <path
+              d="M15 5l-7 7 7 7"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
         </button>
-        <h1 className="flex-1 truncate text-3xl font-bold tracking-[-0.03em] text-white/90 lg:text-4xl">
+        <span aria-hidden className="h-10 w-1 shrink-0 rounded-full bg-cdp-sector" />
+        <h1 className="flex-1 truncate text-cdp-header font-semibold text-cdp-fg">
           {caseStudy.tagline}
         </h1>
         {modelView.layers.length > 0 && (
@@ -53,15 +64,15 @@ export function CaseStudyViewer({ refData }: { refData: CaseStudyRef }) {
             aria-label="Toggle layers"
             aria-pressed={layersOpen}
             onClick={() => setLayersOpen((v) => !v)}
-            className={`shrink-0 cursor-pointer rounded-[15px] p-2.5 transition ${
+            className={`flex size-cdp-touch-comfort shrink-0 cdp-pressable cursor-pointer items-center justify-center rounded-cdp-xl border ${
               layersOpen
-                ? "bg-cdp-slate-dark text-white shadow-cdp-neu-dark-inset-sm"
-                : "text-white/60 hover:text-white"
+                ? "border-cdp-sector-edge bg-cdp-sector-tint text-cdp-sector-fg"
+                : "border-cdp-line bg-cdp-surface-2 text-cdp-fg-muted"
             }`}
           >
             <svg
               viewBox="0 0 24 24"
-              className="size-8"
+              className="size-6"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
@@ -77,46 +88,61 @@ export function CaseStudyViewer({ refData }: { refData: CaseStudyRef }) {
         )}
       </header>
       <div className="flex min-h-0 flex-1 gap-7">
-        <section className="relative flex-1 rounded-[30px]">
-          <div className="absolute inset-0 overflow-hidden rounded-[30px]">
+        <section className="relative flex-1 rounded-cdp-2xl">
+          <div className="absolute inset-0 overflow-hidden rounded-cdp-2xl">
             <ViewerErrorBoundary onRetry={clearFailedLoad}>
               <ViewerCanvas key={modelView.id} modelView={modelView} />
             </ViewerErrorBoundary>
           </div>
-          {/* Inset lip above the canvas so the panel reads as carved in. */}
-          <div className="pointer-events-none absolute inset-0 rounded-[30px] shadow-cdp-neu-dark-inset" />
+          {/* A hairline is the whole edge treatment: this language has no
+              bevel, so the panel is defined by where the surface stops. */}
+          <div className="pointer-events-none absolute inset-0 rounded-cdp-2xl border border-cdp-line" />
           {hasInfo && (
-            <div className="absolute top-8 left-8">
+            <div className="absolute top-6 left-6">
               <button
                 aria-label="Info"
                 aria-expanded={infoOpen}
                 onClick={toggleInfo}
-                className="size-10 cursor-pointer rounded-[15px] bg-white/60 pb-1 font-serif text-3xl leading-none text-cdp-slate italic hover:bg-white/80"
+                className="cdp-glass flex size-cdp-touch-comfort cdp-pressable cursor-pointer items-center justify-center rounded-cdp-xl font-serif text-cdp-title leading-none text-cdp-fg italic"
               >
                 i
               </button>
+              {/* Dark glass with light text, because the backdrop here is a
+                  live render and carries no fixed contrast ratio. */}
               {infoOpen && (
-                <div className="absolute top-12 left-0 z-10 w-72 space-y-2 rounded-[20px] bg-white/90 p-4 text-cdp-slate shadow-cdp-neu-dark-raised">
+                <div className="absolute top-[68px] left-0 cdp-glass z-10 w-80 space-y-2 rounded-cdp-2xl p-5 text-cdp-fg">
                   {modelView.infoPrompt && (
-                    <p className="text-sm font-semibold">{modelView.infoPrompt}</p>
+                    <p className="text-cdp-body font-semibold">{modelView.infoPrompt}</p>
                   )}
-                  {caseStudy.body && <p className="text-xs leading-relaxed">{caseStudy.body}</p>}
+                  {caseStudy.body && (
+                    <p className="text-cdp-caption leading-relaxed text-cdp-fg-muted">
+                      {caseStudy.body}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
           )}
-          <div className="absolute top-8 right-8 flex items-center gap-3">
+          <div className="absolute top-6 right-6 flex items-center gap-3">
             <ViewsMenu cameraViews={modelView.cameraViews} />
             <button
-              aria-label="Refresh view"
+              aria-label="Reset view"
               onClick={refresh}
-              className="cursor-pointer opacity-60 transition hover:opacity-100"
+              className="cdp-glass flex size-cdp-touch-comfort cdp-pressable cursor-pointer items-center justify-center rounded-cdp-xl text-cdp-fg"
             >
-              <img src={refreshIcon} alt="" className="size-[41px]" />
+              <svg viewBox="0 0 24 24" className="size-6" fill="none" aria-hidden="true">
+                <path
+                  d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </button>
           </div>
           {layersOpen && (
-            <div className="absolute top-24 left-8">
+            <div className="absolute top-[104px] left-6">
               <LayerPanel modelView={modelView} />
             </div>
           )}

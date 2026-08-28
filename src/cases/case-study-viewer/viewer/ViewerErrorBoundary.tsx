@@ -41,12 +41,17 @@ export class ViewerErrorBoundary extends Component<Props, State> {
   override render(): ReactNode {
     if (this.state.hasError) {
       return (
-        <div className="flex h-full items-center justify-center">
-          <div className="flex flex-col items-center gap-4 rounded-xl border border-white/10 bg-cdp-slate-dark p-8 text-center">
-            <p className="text-sm text-white/70">Model failed to load</p>
+        <div className="flex h-full items-center justify-center p-8">
+          <div className="flex flex-col items-center gap-5 rounded-cdp-2xl border border-cdp-line bg-cdp-surface-1 p-10 text-center">
+            <p className="text-cdp-title font-semibold text-cdp-fg">Model failed to load</p>
+            {/* Read at arm's length mid-conversation, so the panel states the
+                recovery rather than only the failure. */}
+            <p className="max-w-[34ch] text-cdp-body text-cdp-fg-muted">
+              The 3D model could not be fetched. Retry, or go back and pick another case study.
+            </p>
             <button
               onClick={this.retry}
-              className="cursor-pointer rounded-lg bg-white px-5 py-2 text-sm font-semibold text-cdp-slate hover:bg-white/80"
+              className="h-cdp-touch-comfort cdp-pressable cursor-pointer rounded-cdp-xl border border-transparent bg-cdp-blue px-8 text-cdp-body font-semibold text-cdp-slate-dark"
             >
               Retry
             </button>

@@ -37,7 +37,7 @@ namespace, and every custom utility starts with `cdp-`:
     --spacing-cdp-touch-comfort  ->  h-cdp-touch-comfort
     --radius-cdp-2xl             ->  rounded-cdp-2xl
     --text-cdp-caption           ->  text-cdp-caption
-    @utility cdp-root, cdp-pressable, cdp-safe
+    @utility cdp-root, cdp-pressable, cdp-glass, cdp-safe
 
 A later case picks its own segment and the two sets sit side by side.
 
@@ -91,9 +91,4 @@ the content set can be replaced by an external `content.json`. There is one bake
 nothing to validate, so `types.ts` carries the same shape as types alone.
 
 **The back control is a button.** The source's is a Next `<Link>` back to the sector. There is no
-router here, so it keeps the label and the artwork without the destination.
-
-## Known rough edges
-
-The loading progress panel is anchored at the scene's world origin, which for this model sits below
-the eye, so the bar reads low in the frame rather than centred.
+router here, so it keeps the label and the shape without the destination.
