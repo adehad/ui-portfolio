@@ -1,0 +1,125 @@
+/* Palette and element styles for the Self-Service Portal rebuild.
+
+   The app paints these on document.body. Storybook's preview iframe has one body
+   shared by every story, and the docs page mounts several stories into it at once,
+   so the theme class and the whole cascade hang off .ssp-root instead.
+
+   Custom properties are global whatever selector declares them, so every name here
+   carries an ssp- segment. */
+
+.ssp-root {
+  /* index.scss puts these on body and #root. The class moved off body, so the sizing
+     has to move with it or the theme colour stops at the last row of the form. */
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+
+  background-color: var(--ssp-bkg);
+  color: var(--ssp-font-color);
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell",
+    "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  &.ssp-light-theme {
+    --ssp-bkg: #fff;
+    --ssp-font-color: #22272b;
+    --ssp-font-color-secondary: #4d4d4d;
+    --ssp-link-color: #2684ff;
+    --ssp-header-bkg: #fff;
+    --ssp-header-bkg-secondary: #f8f8ff;
+    --ssp-header-border-secondary: #1f1e2414;
+    --ssp-btn-text: #fff;
+    --ssp-btn-bkg: #579dff;
+    --ssp-chip-bkg: #9cc0f2;
+    --ssp-info-border: #c3d8f8;
+    --ssp-info-bkg: #cfe2ff;
+    --ssp-disabled-border: rgb(198, 195, 195);
+    --ssp-disabled-bkg: #c2c2c2;
+    --ssp-tooltip-bkg: #696969;
+    --ssp-input-border: #a6c5e229;
+
+    color-scheme: light;
+  }
+
+  &.ssp-dark-theme {
+    --ssp-bkg: #1d2125;
+    --ssp-font-color: #a5b9cd;
+    --ssp-font-color-secondary: #b6c2cf;
+    --ssp-link-color: #2684ff;
+    --ssp-header-bkg: #21272e;
+    --ssp-header-bkg-secondary: #272b2f;
+    --ssp-header-border-secondary: #393e42;
+    --ssp-btn-text: #22272b;
+    --ssp-btn-bkg: #579dff;
+    --ssp-chip-bkg: #6b96d2;
+    --ssp-info-border: #c3d8f8;
+    --ssp-info-bkg: rgb(28, 42, 65);
+    --ssp-disabled-border: rgb(80, 80, 80);
+    --ssp-tooltip-bkg: #9fadbc;
+    --ssp-input-border: #a6c5e229;
+
+    color-scheme: dark;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  label {
+    color: var(--ssp-font-color);
+  }
+
+  p,
+  ol,
+  ul,
+  li {
+    color: var(--ssp-font-color-secondary);
+  }
+
+  a {
+    color: var(--ssp-link-color);
+    text-decoration: none;
+  }
+
+  input,
+  input[-internal-autofill-selected] {
+    background-color: var(--ssp-header-bkg);
+    color: var(--ssp-font-color);
+    border: 2px solid var(--ssp-input-border);
+    outline-color: var(--ssp-input-border);
+  }
+
+  input[type="checkbox"] {
+    transform: scale(1.25);
+    background-color: #22272b;
+    color: #b6c2cf;
+    border: 2px solid #a6c5e229;
+  }
+
+  .ssp-readable {
+    margin: 60px auto;
+    max-width: 1080px;
+    line-height: 1.6;
+    font-size: 18px;
+    padding: 0 10px;
+    flex: 1 1 auto;
+  }
+
+  .ssp-theme-icon {
+    display: flex;
+    background: none;
+    border: none;
+    outline: none;
+    cursor: pointer;
+
+    svg {
+      max-width: 41px;
+      max-height: 41px;
+    }
+  }
+}
