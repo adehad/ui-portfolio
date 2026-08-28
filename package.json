@@ -17,10 +17,14 @@
   },
   "dependencies": {
     "@fontsource/open-sans": "^5.3.0",
+    "formik": "^2.4.9",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "react-select": "^5.10.2",
+    "yup": "^1.7.1"
   },
   "devDependencies": {
+    "@faker-js/faker": "^10.6.0",
     "@storybook/addon-docs": "10.5.10",
     "@storybook/react-vite": "10.5.10",
     "@tailwindcss/postcss": "^4.3.3",
