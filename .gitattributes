@@ -1,1 +1,4 @@
 * text=auto eol=lf
+
+# Derived from package.json; keep it out of the before..after diff.
+bun.lock -diff linguist-generated=true
