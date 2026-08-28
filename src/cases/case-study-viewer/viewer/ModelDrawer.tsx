@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { modelPreviewUrl } from "./content";
 import type { CaseStudy, ModelView } from "./types";
 import { useViewerStore } from "./useViewerStore";
@@ -9,16 +8,23 @@ import { useViewerStore } from "./useViewerStore";
  * pre-built preview when one exists, an explicit thumbnail on the Model View
  * winning, and fall back to the view name. It overlays the canvas rather than
  * sitting beside it so toggling never resizes the WebGL drawing buffer.
+ *
+ * `open` is owned by the viewer rather than by this component, because the
+ * camera view rail shares the right edge and has to step aside by the drawer's
+ * width, so both have to read the same state.
  */
 export function ModelDrawer({
   caseStudy,
   activeModelView,
+  open,
+  onOpenChange,
 }: {
   caseStudy: CaseStudy;
   activeModelView: ModelView;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }) {
   const setModelView = useViewerStore((s) => s.setModelView);
-  const [open, setOpen] = useState(true);
 
   return (
     // The handle sits on the panel's right edge rather than inset from it, so
@@ -28,7 +34,7 @@ export function ModelDrawer({
       <button
         aria-label={open ? "Hide models" : "Show models"}
         aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => onOpenChange(!open)}
         className="cdp-glass flex h-28 w-cdp-touch shrink-0 cdp-pressable cursor-pointer items-center justify-center rounded-l-cdp-xl text-cdp-fg-muted"
       >
         <svg

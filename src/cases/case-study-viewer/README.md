@@ -11,14 +11,15 @@ hashing path is the real one, not a string comparison.
 ## The case study page
 
 `viewer/` holds the 3D screen. It renders one Case Study with a Model View, a drawer listing the
-views the Case Study carries, a dropdown of saved camera shots, a layer that can be ghosted, and a
-hotspot marker anchored to a point on the model.
+views the Case Study carries, a rail of saved camera shots down the right edge, a layer that can be
+ghosted, and a hotspot marker anchored to a point on the model.
 
-    viewer/content.ts        the-eye fixture, plus the model, size and preview lookups
-    viewer/types.ts          the shape a Case Study, Model View, Camera View, Layer and Hotspot take
-    viewer/ViewerCanvas.tsx  the R3F <Canvas>, its camera and the orbit controls
-    viewer/ModelStage.tsx    loads the GLB and hangs the ghosting off it
-    viewer/CameraRig.tsx     lerps the camera between saved views
+    viewer/content.ts          the-eye fixture, plus the model, size and preview lookups
+    viewer/types.ts            the shape a Case Study, Model View, Camera View, Layer and Hotspot take
+    viewer/ViewerCanvas.tsx    the R3F <Canvas>, its camera and the orbit controls
+    viewer/ModelStage.tsx      loads the GLB and hangs the ghosting off it
+    viewer/CameraRig.tsx       lerps the camera between saved views
+    viewer/CameraViewRail.tsx  the carousel that steps through the saved shots
 
 Every Model View carries a hand-authored `defaultCamera`, so the Canvas is constructed at that
 pose. It is constructed with clip planes scaled to that pose too: the stock 0.1 near plane sits
@@ -67,7 +68,7 @@ The one model here is 0.6 MB, so nothing needs a capability decision.
 **Frames are drawn on demand.** A canvas that renders continuously would diff on every Chromatic run
 and turn the visual regression setup into noise. The Canvas uses `frameloop="demand"` and the code
 invalidates when something actually changes: the model resolving, a layer being ghosted, a camera
-view being chosen, and each step of a camera lerp. The drawer, the views menu
+view being chosen, and each step of a camera lerp. The drawer, the camera view rail
 and the info panel are DOM overlays and never resize or repaint the canvas, so they schedule no
 frame. `preserveDrawingBuffer` is on so the last frame survives compositing and stays readable to a
 snapshot tool.

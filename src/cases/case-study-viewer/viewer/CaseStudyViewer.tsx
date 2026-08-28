@@ -2,6 +2,7 @@ import { useGLTF } from "@react-three/drei";
 import { useEffect, useState } from "react";
 import watermark from "@/cases/case-study-viewer/brand/cdp-watermark.svg";
 import { TouchGestureGuard } from "@/cases/case-study-viewer/TouchGestureGuard";
+import { CameraViewRail } from "./CameraViewRail";
 import { modelUrl } from "./content";
 import { LayerPanel } from "./LayerPanel";
 import { ModelDrawer } from "./ModelDrawer";
@@ -10,7 +11,6 @@ import type { CaseStudyRef } from "./types";
 import { useViewerStore } from "./useViewerStore";
 import { ViewerCanvas } from "./ViewerCanvas";
 import { ViewerErrorBoundary } from "./ViewerErrorBoundary";
-import { ViewsMenu } from "./ViewsMenu";
 
 export function CaseStudyViewer({ refData }: { refData: CaseStudyRef }) {
   const { caseStudy, sector } = refData;
@@ -20,6 +20,9 @@ export function CaseStudyViewer({ refData }: { refData: CaseStudyRef }) {
   const toggleInfo = useViewerStore((s) => s.toggleInfo);
   const refresh = useViewerStore((s) => s.refresh);
   const [layersOpen, setLayersOpen] = useState(false);
+  // Owned here rather than inside the drawer: the camera view rail shares the
+  // right edge and steps aside by the drawer's width when it opens.
+  const [drawerOpen, setDrawerOpen] = useState(true);
 
   useEffect(() => {
     setModelView(caseStudy.modelViews[0].id);
@@ -123,8 +126,20 @@ export function CaseStudyViewer({ refData }: { refData: CaseStudyRef }) {
               )}
             </div>
           )}
+          {/* right-14 clears the 44px drawer handle plus a gap, and the inner
+              wrapper moves the rail by exactly the drawer's width, so the two
+              share the right edge without ever colliding. Transform rather than
+              `right`, so the shift stays on the compositor. */}
+          <div className="absolute top-1/2 right-14 -translate-y-1/2">
+            <div
+              className={`transition-transform duration-300 ${
+                drawerOpen ? "-translate-x-[var(--spacing-cdp-drawer)]" : "translate-x-0"
+              }`}
+            >
+              <CameraViewRail cameraViews={modelView.cameraViews} />
+            </div>
+          </div>
           <div className="absolute top-6 right-6 flex items-center gap-3">
-            <ViewsMenu cameraViews={modelView.cameraViews} />
             <button
               aria-label="Reset view"
               onClick={refresh}
@@ -151,7 +166,12 @@ export function CaseStudyViewer({ refData }: { refData: CaseStudyRef }) {
             alt=""
             className="pointer-events-none absolute right-8 bottom-8 h-[97px] w-auto opacity-80"
           />
-          <ModelDrawer caseStudy={caseStudy} activeModelView={modelView} />
+          <ModelDrawer
+            caseStudy={caseStudy}
+            activeModelView={modelView}
+            open={drawerOpen}
+            onOpenChange={setDrawerOpen}
+          />
         </section>
       </div>
     </main>

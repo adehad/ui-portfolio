@@ -11,10 +11,10 @@ const meta = {
     docs: {
       description: {
         component: [
-          "Case study page for The Eye. The drawer on the right lists the model views, the Views",
-          "dropdown moves the camera between saved shots, the layers button in the header ghosts",
-          "the eye assembly, and the marker on the model opens its hotspot. The canvas renders on",
-          "demand, so it holds a still frame once everything has settled.",
+          "Case study page for The Eye. The drawer on the right lists the model views, the rail",
+          "down the right edge moves the camera between saved shots, the layers button in the",
+          "header ghosts the eye assembly, and the marker opens its hotspot. The canvas renders",
+          "on demand, so it holds a still frame once everything has settled.",
         ].join(" "),
       },
     },
