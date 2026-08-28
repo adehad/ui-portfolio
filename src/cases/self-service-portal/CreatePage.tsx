@@ -1,6 +1,7 @@
 import { useState } from "react";
 import "@/cases/self-service-portal/CreatePage.scss";
-import { type BuildTarget, PostForm } from "@/cases/self-service-portal/PostForm";
+import type { BuildType, SubmittedBuild } from "@/cases/self-service-portal/formHelpers";
+import { PostForm } from "@/cases/self-service-portal/PostForm";
 import { ThemePicker } from "@/cases/self-service-portal/ThemePicker";
 import { ThemeWrapper } from "@/cases/self-service-portal/ThemeWrapper";
 import type { Option, User } from "@/cases/self-service-portal/types";
@@ -8,13 +9,11 @@ import type { Option, User } from "@/cases/self-service-portal/types";
 export type CreatePageProps = {
   users: Option[];
   currentUser?: User;
-  type?: BuildTarget;
+  type?: BuildType;
 };
 
-type Submitted = { target: BuildTarget; body: string };
-
 export function CreatePage({ users, currentUser, type }: CreatePageProps) {
-  const [submitted, setSubmitted] = useState<Submitted | undefined>();
+  const [submitted, setSubmitted] = useState<SubmittedBuild | undefined>();
 
   return (
     <ThemeWrapper>
@@ -30,12 +29,7 @@ export function CreatePage({ users, currentUser, type }: CreatePageProps) {
           </p>
         ) : null}
 
-        <PostForm
-          onSubmitted={(target, body) => setSubmitted({ target, body })}
-          currentUser={currentUser}
-          users={users}
-          type={type}
-        />
+        <PostForm onSubmitted={setSubmitted} users={users} currentUser={currentUser} type={type} />
       </main>
     </ThemeWrapper>
   );

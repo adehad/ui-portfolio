@@ -21,8 +21,8 @@
     margin: 1rem;
     gap: 0.5rem;
 
-    /* .ssp-form-label carries the caption for the checkbox group. A <label> there has
-       no control to point at, which fails jsx-a11y/label-has-associated-control. */
+    /* .ssp-form-label carries the caption for the checkbox group. A <label> there
+       has no control to point at, which fails jsx-a11y/label-has-associated-control. */
     & label,
     & .ssp-form-label {
       color: var(--ssp-font-color);
@@ -81,16 +81,27 @@
         background-color: #18191a;
         color: white;
         box-shadow: none;
+        cursor: not-allowed;
       }
     }
   }
 
+  /* Columns share the row evenly whether it carries the three of the top row or
+     the three of the members row. min-width: 0 lets a column shrink, so a
+     multi-select that wraps its chips grows downward instead of widening the row. */
   .ssp-row {
     display: flex;
 
     .ssp-col {
-      flex: 1 0 45%;
+      flex: 1 1 0;
+      min-width: 0;
     }
+  }
+
+  /* Holds the top row level while one column carries a select and the next a
+     radio stack. */
+  .ssp-form-control.ssp-col > div {
+    min-height: 100px;
   }
 
   .ssp-page-header {
@@ -107,5 +118,188 @@
     border: 1px solid var(--ssp-info-border);
     font-size: 14px;
     line-height: 16px;
+    word-break: break-all;
+  }
+
+  .ssp-destination-selector {
+    border: none;
+    padding: 0;
+    margin: 0;
+    /* A vertical radio column, so the destinations line up with the Requesting
+       User and Type blocks beside them. */
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    legend {
+      color: var(--ssp-font-color);
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    label {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      width: fit-content;
+
+      & span {
+        font-size: 14px;
+        align-self: center;
+        font-weight: 500;
+      }
+    }
+  }
+
+  .ssp-group-cascade {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    .ssp-cascade-level label {
+      /* The cascade boxes are sub-levels of the project field, so their labels
+         read as secondary rather than as section headings. */
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+  }
+
+  .ssp-cascade-option,
+  .ssp-repo-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .ssp-route-preview {
+    font-size: 0.85rem;
+    margin: 0.5rem 1rem;
+
+    .ssp-route-row {
+      /* Room for the sparkle overlay to bleed above and below a to-be-created
+         segment without the adjacent row clipping it. */
+      padding: 0.15rem 0;
+    }
+
+    code {
+      word-break: break-all;
+      opacity: 0.85;
+    }
+
+    .ssp-route-preview-label {
+      font-weight: 600;
+      opacity: 0.85;
+    }
+
+    /* A to-be-created segment reads brighter than the existing ones around it,
+       reinforcing the sparkle. */
+    .ssp-route-segment-new {
+      color: var(--ssp-font-color);
+      font-weight: 600;
+    }
+
+    /* Muted marker on a system row that will create nothing. */
+    .ssp-route-exists-tag {
+      margin-left: 0.5rem;
+      padding: 0 0.4rem;
+      border-radius: 0.75rem;
+      font-size: 0.7rem;
+      font-style: italic;
+      opacity: 0.6;
+      border: 1px solid var(--ssp-input-border);
+    }
+  }
+
+  /* Field label plus its optional help button. */
+  .ssp-field-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .ssp-info-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--ssp-link-color);
+    cursor: pointer;
+    line-height: 0;
+    border-radius: 50%;
+
+    &:focus-visible {
+      outline: 2px solid var(--ssp-link-color);
+      outline-offset: 2px;
+    }
+  }
+
+  .ssp-info-tooltip {
+    width: 220px;
+
+    p {
+      margin: 0.15rem 0;
+    }
+  }
+
+  .ssp-tooltip-wrapper {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    /* The horizontal transform, both the centring and the viewport clamp, is set
+       inline by Tooltip.tsx. */
+    padding: 0.5rem;
+    border-radius: 4px;
+    z-index: 1;
+    background-color: var(--ssp-tooltip-bkg);
+
+    p {
+      color: var(--ssp-bkg);
+    }
+  }
+
+  .ssp-ccsm-alert-box {
+    margin: 1rem;
+    background-color: rgb(207, 226, 255);
+    border: 1px solid rgb(158, 197, 254);
+    color: rgb(5, 44, 101);
+    font-size: 13px;
+    padding: 9px;
+    line-height: 16px;
+    border-radius: 4px;
+  }
+
+  .ssp-form-error {
+    color: var(--ssp-error-color);
+    font-size: 13px;
+    font-weight: 300;
+    font-style: italic;
+    display: flex;
+    align-items: center;
+  }
+
+  .ssp-form-hint {
+    color: #888;
+    font-size: 13px;
+    font-weight: 300;
+    font-style: italic;
+    display: flex;
+    align-items: center;
+  }
+
+  .ssp-submit-blocked {
+    margin: 0 1rem;
+    justify-content: flex-end;
+  }
+
+  .ssp-mb-1 {
+    margin-bottom: 0.5rem;
   }
 }

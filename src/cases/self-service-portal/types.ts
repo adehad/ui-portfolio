@@ -13,15 +13,20 @@ export type Option = {
   value: string;
 };
 
-export type BuildParameters = {
-  REQUESTING_USER: string;
-  IS_GITLAB: boolean;
-  IS_JENKINS: boolean;
-  PROJECT_NAME: string;
-  REPO_NAME: string;
-  CLIENT_NAME: string;
-  IS_CCSM: boolean;
-  PROJECT_OWNER: string;
-  PROJECT_ADMINS: string[];
-  PROJECT_DEVELOPERS: string[];
+/** One row of the group and repo listings: minimal id and display name. */
+export type GitLabGroupSummary = {
+  id: number;
+  name: string;
+};
+
+export type GitLabRepoSummary = GitLabGroupSummary;
+
+/** One group nested under a client at any depth. parentId links it to its parent
+    so the cascade can rebuild an ancestor chain from a deep pick; breadcrumb is
+    the display path used to label deep search results. */
+export type GitLabDescendantGroup = {
+  id: number;
+  name: string;
+  parentId: number | null;
+  breadcrumb: string;
 };
