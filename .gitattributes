@@ -2,3 +2,10 @@
 
 # Derived from package.json; keep it out of the before..after diff.
 bun.lock -diff linguist-generated=true
+
+# A corrupted GLB fails silently, so never let heuristics decide these.
+*.glb binary
+*.mp4 binary
+*.png binary
+*.jpg binary
+*.woff2 binary
