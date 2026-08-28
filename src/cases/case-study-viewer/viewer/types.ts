@@ -21,19 +21,45 @@ export interface Hotspot {
   body: string;
 }
 
-export interface ModelView {
+export interface Chapter {
   id: string;
   name: string;
-  /** Bare GLB filename, resolved against the model base URL by `modelUrl`. */
+  startTime: number;
+  /** Omit to run to the next chapter, or to the end of the clip. */
+  endTime?: number;
+}
+
+interface MediaViewBase {
+  id: string;
+  name: string;
+  /** Bare filename, resolved against the base URL for the view's kind. */
   src: string;
   thumbnail?: string;
+  infoPrompt?: string;
+}
+
+export interface ModelMediaView extends MediaViewBase {
+  kind: "model";
   /** Applied on mount. Required: nothing fits a camera to a model's bounds. */
   defaultCamera: Pick<CameraView, "position" | "target">;
   cameraViews: CameraView[];
   layers: Layer[];
   hotspots: Hotspot[];
-  infoPrompt?: string;
 }
+
+export interface VideoMediaView extends MediaViewBase {
+  kind: "video";
+  /** Bare filename in the previews folder, used as the drawer tile and poster. */
+  poster?: string;
+  chapters: Chapter[];
+}
+
+/**
+ * Discriminated on `kind` so camera views, layers and hotspots are only
+ * reachable on the kind that can honour them, and so the stage can pick a
+ * renderer without a cast.
+ */
+export type MediaView = ModelMediaView | VideoMediaView;
 
 export interface CaseStudy {
   id: string;
@@ -42,7 +68,7 @@ export interface CaseStudy {
   body: string;
   accent: "green" | "blue" | "orange";
   /** At least one. The viewer falls back to the first when none is active. */
-  modelViews: [ModelView, ...ModelView[]];
+  mediaViews: [MediaView, ...MediaView[]];
 }
 
 export interface Sector {

@@ -5,17 +5,17 @@ import { TouchGestureGuard } from "@/cases/case-study-viewer/TouchGestureGuard";
 import { CameraViewRail } from "./CameraViewRail";
 import { modelUrl } from "./content";
 import { LayerPanel } from "./LayerPanel";
+import { MediaStage } from "./MediaStage";
 import { ModelDrawer } from "./ModelDrawer";
 import { sectorStyle } from "./theme";
 import type { CaseStudyRef } from "./types";
 import { useViewerStore } from "./useViewerStore";
-import { ViewerCanvas } from "./ViewerCanvas";
 import { ViewerErrorBoundary } from "./ViewerErrorBoundary";
 
 export function CaseStudyViewer({ refData }: { refData: CaseStudyRef }) {
   const { caseStudy, sector } = refData;
-  const activeModelViewId = useViewerStore((s) => s.activeModelViewId);
-  const setModelView = useViewerStore((s) => s.setModelView);
+  const activeMediaViewId = useViewerStore((s) => s.activeMediaViewId);
+  const setMediaView = useViewerStore((s) => s.setMediaView);
   const infoOpen = useViewerStore((s) => s.infoOpen);
   const toggleInfo = useViewerStore((s) => s.toggleInfo);
   const refresh = useViewerStore((s) => s.refresh);
@@ -25,17 +25,19 @@ export function CaseStudyViewer({ refData }: { refData: CaseStudyRef }) {
   const [drawerOpen, setDrawerOpen] = useState(true);
 
   useEffect(() => {
-    setModelView(caseStudy.modelViews[0].id);
-  }, [caseStudy.modelViews, setModelView]);
+    setMediaView(caseStudy.mediaViews[0].id);
+  }, [caseStudy.mediaViews, setMediaView]);
 
-  const modelView =
-    caseStudy.modelViews.find((m) => m.id === activeModelViewId) ?? caseStudy.modelViews[0];
+  const mediaView =
+    caseStudy.mediaViews.find((m) => m.id === activeMediaViewId) ?? caseStudy.mediaViews[0];
 
-  const hasInfo = Boolean(modelView.infoPrompt || caseStudy.body);
+  const hasInfo = Boolean(mediaView.infoPrompt || caseStudy.body);
 
   // Evict the failed load from drei's suspense cache so the boundary's
   // remount re-fetches instead of re-throwing the cached error.
-  const clearFailedLoad = () => useGLTF.clear(modelUrl(modelView.src));
+  const clearFailedLoad = () => {
+    if (mediaView.kind === "model") useGLTF.clear(modelUrl(mediaView.src));
+  };
 
   return (
     <main
@@ -62,7 +64,7 @@ export function CaseStudyViewer({ refData }: { refData: CaseStudyRef }) {
         <h1 className="flex-1 truncate text-cdp-header font-semibold text-cdp-fg">
           {caseStudy.tagline}
         </h1>
-        {modelView.layers.length > 0 && (
+        {mediaView.kind === "model" && mediaView.layers.length > 0 && (
           <button
             aria-label="Toggle layers"
             aria-pressed={layersOpen}
@@ -94,7 +96,7 @@ export function CaseStudyViewer({ refData }: { refData: CaseStudyRef }) {
         <section className="relative flex-1 rounded-cdp-2xl">
           <div className="absolute inset-0 overflow-hidden rounded-cdp-2xl">
             <ViewerErrorBoundary onRetry={clearFailedLoad}>
-              <ViewerCanvas key={modelView.id} modelView={modelView} />
+              <MediaStage mediaView={mediaView} drawerOpen={drawerOpen} />
             </ViewerErrorBoundary>
           </div>
           {/* A hairline is the whole edge treatment: this language has no
@@ -114,8 +116,8 @@ export function CaseStudyViewer({ refData }: { refData: CaseStudyRef }) {
                   live render and carries no fixed contrast ratio. */}
               {infoOpen && (
                 <div className="absolute top-[68px] left-0 cdp-glass z-10 w-80 space-y-2 rounded-cdp-2xl p-5 text-cdp-fg">
-                  {modelView.infoPrompt && (
-                    <p className="text-cdp-body font-semibold">{modelView.infoPrompt}</p>
+                  {mediaView.infoPrompt && (
+                    <p className="text-cdp-body font-semibold">{mediaView.infoPrompt}</p>
                   )}
                   {caseStudy.body && (
                     <p className="text-cdp-caption leading-relaxed text-cdp-fg-muted">
@@ -136,7 +138,7 @@ export function CaseStudyViewer({ refData }: { refData: CaseStudyRef }) {
                 drawerOpen ? "-translate-x-[var(--spacing-cdp-drawer)]" : "translate-x-0"
               }`}
             >
-              <CameraViewRail cameraViews={modelView.cameraViews} />
+              {mediaView.kind === "model" && <CameraViewRail cameraViews={mediaView.cameraViews} />}
             </div>
           </div>
           <div className="absolute top-6 right-6 flex items-center gap-3">
@@ -156,9 +158,9 @@ export function CaseStudyViewer({ refData }: { refData: CaseStudyRef }) {
               </svg>
             </button>
           </div>
-          {layersOpen && (
+          {layersOpen && mediaView.kind === "model" && (
             <div className="absolute top-[104px] left-6">
-              <LayerPanel modelView={modelView} />
+              <LayerPanel mediaView={mediaView} />
             </div>
           )}
           <img
@@ -168,7 +170,7 @@ export function CaseStudyViewer({ refData }: { refData: CaseStudyRef }) {
           />
           <ModelDrawer
             caseStudy={caseStudy}
-            activeModelView={modelView}
+            activeMediaView={mediaView}
             open={drawerOpen}
             onOpenChange={setDrawerOpen}
           />

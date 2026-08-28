@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { expect, waitFor, within } from "storybook/test";
+import { expect, userEvent, waitFor, within } from "storybook/test";
 import { theEye } from "@/cases/case-study-viewer/viewer/content";
 import { CaseStudyViewer } from "@/cases/case-study-viewer/viewer/CaseStudyViewer";
 
@@ -35,5 +35,27 @@ export const Default: Story = {
       timeout: 30_000,
     });
     await waitFor(() => expect(view.queryByText(/Preparing model/)).toBeNull());
+  },
+};
+
+const walkthrough = theEye.caseStudy.mediaViews.find((mv) => mv.id === "delivery-walkthrough");
+const CHAPTER_COUNT = walkthrough?.kind === "video" ? walkthrough.chapters.length : 0;
+
+/**
+ * The third drawer entry is a video rather than a model. It opens paused on its
+ * poster frame, so the snapshot is a fixed frame, and the scrub bar is split
+ * into the segments of the chapter track built from the authored chapters.
+ */
+export const VideoView: Story = {
+  args: { refData: theEye },
+  play: async ({ canvasElement }) => {
+    const view = within(canvasElement);
+    await userEvent.click(view.getByRole("button", { name: "Walkthrough" }));
+    await waitFor(() => expect(view.getByRole("button", { name: "Play" })).toBeTruthy());
+    // The chapter track is built from the duration the player reports, so a
+    // segment per chapter is the proof it was built at all.
+    await waitFor(() =>
+      expect(canvasElement.querySelectorAll("[data-chapter]")).toHaveLength(CHAPTER_COUNT),
+    );
   },
 };

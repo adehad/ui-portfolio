@@ -1,18 +1,18 @@
-import type { ModelView } from "./types";
+import type { ModelMediaView } from "./types";
 import { useViewerStore } from "./useViewerStore";
 
-export function LayerPanel({ modelView }: { modelView: ModelView }) {
+export function LayerPanel({ mediaView }: { mediaView: ModelMediaView }) {
   const ghostedLayerIds = useViewerStore((s) => s.ghostedLayerIds);
   const toggleLayer = useViewerStore((s) => s.toggleLayer);
 
-  if (!modelView.layers.length) return null;
+  if (!mediaView.layers.length) return null;
 
   return (
     <div className="pointer-events-auto cdp-glass flex w-56 flex-col gap-1 rounded-cdp-2xl p-3">
       <p className="px-3 py-2 text-cdp-caption font-semibold tracking-[0.14em] text-cdp-fg-subtle uppercase">
         Layers
       </p>
-      {modelView.layers.map((layer) => {
+      {mediaView.layers.map((layer) => {
         const ghosted = ghostedLayerIds.includes(layer.id);
         return (
           <button

@@ -1,6 +1,7 @@
 import type { CaseStudyRef } from "./types";
 
 const MODEL_BASE_URL = "/case-study-viewer/models";
+const MEDIA_BASE_URL = "/case-study-viewer/media";
 const PREVIEW_BASE_URL = "/case-study-viewer/previews";
 
 /** Byte sizes of the shipped GLBs, so the loader can show a percentage before
@@ -16,6 +17,14 @@ const MODEL_PREVIEWS: Record<string, string | undefined> = {
 
 export function modelUrl(src: string): string {
   return `${MODEL_BASE_URL}/${src}`;
+}
+
+export function mediaUrl(src: string): string {
+  return `${MEDIA_BASE_URL}/${src}`;
+}
+
+export function previewUrl(name: string): string {
+  return `${PREVIEW_BASE_URL}/${name}`;
 }
 
 export function modelSizeBytes(src: string): number | undefined {
@@ -34,8 +43,9 @@ export const theEye: CaseStudyRef = {
     tagline: "Precision delivery to the back of the eye.",
     body: "Detailed breakdown of the ocular delivery concept: mechanism, material choices, and design constraints. Booth staff talk over the detail — keep on-screen copy minimal.",
     accent: "green",
-    modelViews: [
+    mediaViews: [
       {
+        kind: "model",
         id: "eye-cross-section",
         name: "Cross Section",
         src: "eye-cross-section.glb",
@@ -73,6 +83,22 @@ export const theEye: CaseStudyRef = {
         // "Eye_Cross_Section" on the runtime scene graph.
         layers: [{ id: "eye-shell", label: "Eye Assembly", nodeNames: ["Eye_Cross_Section"] }],
         infoPrompt: "Spin to show the injection path. Pinch to zoom into the retina.",
+      },
+      {
+        kind: "video",
+        id: "delivery-walkthrough",
+        name: "Walkthrough",
+        src: "sample-clip.mp4",
+        poster: "sample-clip.jpg",
+        // Three even thirds of the 12s clip. Only the last one's end depends
+        // on the duration the player reports, which is why the track cannot be
+        // built until the video has loaded its metadata.
+        chapters: [
+          { id: "approach", name: "Approach", startTime: 0 },
+          { id: "insertion", name: "Insertion", startTime: 4 },
+          { id: "release", name: "Release", startTime: 8 },
+        ],
+        infoPrompt: "Scrub the chapters to jump between the stages of the delivery.",
       },
     ],
   },

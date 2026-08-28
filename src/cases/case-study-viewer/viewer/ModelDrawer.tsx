@@ -1,13 +1,20 @@
-import { modelPreviewUrl } from "./content";
-import type { CaseStudy, ModelView } from "./types";
+import { modelPreviewUrl, previewUrl } from "./content";
+import type { CaseStudy, MediaView } from "./types";
 import { useViewerStore } from "./useViewerStore";
 
+/** An explicit thumbnail wins; otherwise a video shows its poster frame and a
+    model its pre-rendered still. */
+function tilePreview(mv: MediaView): string | undefined {
+  if (mv.thumbnail) return mv.thumbnail;
+  if (mv.kind === "video") return mv.poster ? previewUrl(mv.poster) : undefined;
+  return modelPreviewUrl(mv.src);
+}
+
 /**
- * Collapsible model-selection drawer over the right edge of the canvas panel:
- * a handle tab slides open a rail of tiles, one per Model View. Tiles show the
- * pre-built preview when one exists, an explicit thumbnail on the Model View
- * winning, and fall back to the view name. It overlays the canvas rather than
- * sitting beside it so toggling never resizes the WebGL drawing buffer.
+ * Collapsible media-selection drawer over the right edge of the canvas panel:
+ * a handle tab slides open a rail of tiles, one per Media View. It overlays
+ * the canvas rather than sitting beside it so toggling never resizes the WebGL
+ * drawing buffer.
  *
  * `open` is owned by the viewer rather than by this component, because the
  * camera view rail shares the right edge and has to step aside by the drawer's
@@ -15,16 +22,16 @@ import { useViewerStore } from "./useViewerStore";
  */
 export function ModelDrawer({
   caseStudy,
-  activeModelView,
+  activeMediaView,
   open,
   onOpenChange,
 }: {
   caseStudy: CaseStudy;
-  activeModelView: ModelView;
+  activeMediaView: MediaView;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const setModelView = useViewerStore((s) => s.setModelView);
+  const setMediaView = useViewerStore((s) => s.setMediaView);
 
   return (
     // The handle sits on the panel's right edge rather than inset from it, so
@@ -56,20 +63,20 @@ export function ModelDrawer({
       <div
         className={`cdp-glass flex max-h-full flex-col items-center gap-4 overflow-y-auto overscroll-contain rounded-l-cdp-2xl transition-[width,opacity,padding] duration-300 ${
           open
-            ? "w-cdp-drawer px-4 py-4 opacity-100"
+            ? "w-cdp-drawer px-3 py-4 opacity-100"
             : "pointer-events-none w-0 border-0 px-0 py-0 opacity-0"
         }`}
       >
-        {caseStudy.modelViews.map((mv) => {
-          const active = mv.id === activeModelView.id;
-          const preview = mv.thumbnail ?? modelPreviewUrl(mv.src);
+        {caseStudy.mediaViews.map((mv) => {
+          const active = mv.id === activeMediaView.id;
+          const preview = tilePreview(mv);
           return (
             <button
               key={mv.id}
-              onClick={() => setModelView(mv.id)}
+              onClick={() => setMediaView(mv.id)}
               aria-pressed={active}
               aria-label={mv.name}
-              className={`flex size-[136px] shrink-0 cdp-pressable cursor-pointer items-center justify-center overflow-hidden rounded-cdp-xl border p-2 ${
+              className={`flex size-[128px] shrink-0 cdp-pressable cursor-pointer items-center justify-center overflow-hidden rounded-cdp-xl border p-2 ${
                 active ? "border-cdp-sector bg-cdp-sector-tint" : "border-cdp-line bg-cdp-surface-2"
               }`}
             >

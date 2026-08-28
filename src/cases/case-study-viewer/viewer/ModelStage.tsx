@@ -3,12 +3,12 @@ import { useThree, type ThreeEvent } from "@react-three/fiber";
 import { useEffect } from "react";
 import { modelUrl } from "./content";
 import { sanitizeFullTransmission } from "./sanitizeModel";
-import type { ModelView } from "./types";
+import type { ModelMediaView } from "./types";
 import { useGhosting } from "./useGhosting";
 import { useViewerStore } from "./useViewerStore";
 
-export function ModelStage({ modelView }: { modelView: ModelView }) {
-  const { scene } = useGLTF(modelUrl(modelView.src));
+export function ModelStage({ mediaView }: { mediaView: ModelMediaView }) {
+  const { scene } = useGLTF(modelUrl(mediaView.src));
   const ghostedLayerIds = useViewerStore((s) => s.ghostedLayerIds);
   const invalidate = useThree((s) => s.invalidate);
 
@@ -17,7 +17,7 @@ export function ModelStage({ modelView }: { modelView: ModelView }) {
     invalidate();
   }, [scene, invalidate]);
 
-  useGhosting(scene, modelView.layers, ghostedLayerIds, invalidate);
+  useGhosting(scene, mediaView.layers, ghostedLayerIds, invalidate);
 
   return (
     <primitive

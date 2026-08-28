@@ -1,14 +1,14 @@
 import { create } from "zustand";
 
 interface ViewerState {
-  activeModelViewId: string | null;
+  activeMediaViewId: string | null;
   ghostedLayerIds: string[];
   activeCameraViewId: string | null;
   openHotspotId: string | null;
   infoOpen: boolean;
   /** Incremented by refresh(); ViewerCanvas watches it to reset OrbitControls. */
   resetToken: number;
-  setModelView: (id: string) => void;
+  setMediaView: (id: string) => void;
   toggleLayer: (id: string) => void;
   /** null returns to the free-orbit default pose. */
   setCameraView: (id: string | null) => void;
@@ -17,7 +17,7 @@ interface ViewerState {
   refresh: () => void;
 }
 
-const perModelDefaults = {
+const perViewDefaults = {
   ghostedLayerIds: [] as string[],
   activeCameraViewId: null as string | null,
   openHotspotId: null as string | null,
@@ -25,10 +25,10 @@ const perModelDefaults = {
 };
 
 export const useViewerStore = create<ViewerState>((set) => ({
-  activeModelViewId: null,
-  ...perModelDefaults,
+  activeMediaViewId: null,
+  ...perViewDefaults,
   resetToken: 0,
-  setModelView: (id) => set({ activeModelViewId: id, ...perModelDefaults }),
+  setMediaView: (id) => set({ activeMediaViewId: id, ...perViewDefaults }),
   toggleLayer: (id) =>
     set((s) => ({
       ghostedLayerIds: s.ghostedLayerIds.includes(id)
@@ -38,5 +38,5 @@ export const useViewerStore = create<ViewerState>((set) => ({
   setCameraView: (id) => set({ activeCameraViewId: id }),
   openHotspot: (id) => set({ openHotspotId: id }),
   toggleInfo: () => set((s) => ({ infoOpen: !s.infoOpen })),
-  refresh: () => set((s) => ({ ...perModelDefaults, resetToken: s.resetToken + 1 })),
+  refresh: () => set((s) => ({ ...perViewDefaults, resetToken: s.resetToken + 1 })),
 }));

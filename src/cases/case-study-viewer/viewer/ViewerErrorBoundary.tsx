@@ -1,4 +1,5 @@
 import { Component, type ReactNode } from "react";
+import { StageError } from "./StageError";
 
 interface Props {
   children: ReactNode;
@@ -41,22 +42,11 @@ export class ViewerErrorBoundary extends Component<Props, State> {
   override render(): ReactNode {
     if (this.state.hasError) {
       return (
-        <div className="flex h-full items-center justify-center p-8">
-          <div className="flex flex-col items-center gap-5 rounded-cdp-2xl border border-cdp-line bg-cdp-surface-1 p-10 text-center">
-            <p className="text-cdp-title font-semibold text-cdp-fg">Model failed to load</p>
-            {/* Read at arm's length mid-conversation, so the panel states the
-                recovery rather than only the failure. */}
-            <p className="max-w-[34ch] text-cdp-body text-cdp-fg-muted">
-              The 3D model could not be fetched. Retry, or go back and pick another case study.
-            </p>
-            <button
-              onClick={this.retry}
-              className="h-cdp-touch-comfort cdp-pressable cursor-pointer rounded-cdp-xl border border-transparent bg-cdp-blue px-8 text-cdp-body font-semibold text-cdp-slate-dark"
-            >
-              Retry
-            </button>
-          </div>
-        </div>
+        <StageError
+          title="Model failed to load"
+          detail="The 3D model could not be fetched. Retry, or go back and pick another case study."
+          onRetry={this.retry}
+        />
       );
     }
     return (
