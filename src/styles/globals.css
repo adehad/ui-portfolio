@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+@source "../";
+@source "../../.storybook";
+
+@theme {
+  --color-canvas: #101418;
+  --color-ink: #e8ecf1;
+  --color-signal: #4fd1c5;
+  --radius-panel: 1.25rem;
+  --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
