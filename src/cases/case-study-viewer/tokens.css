@@ -8,6 +8,27 @@
 @theme {
   --font-cdp-sans: "Open Sans", Arial, Helvetica, sans-serif;
 
+  /* Surface ramp anchored on CDP brand slate, in OKLCH so the steps are
+     perceptually even. surface-0 is the page, higher is nearer the viewer, and
+     1 and 2 track the two brand slates (#1c242d, #26303b). Depth comes from
+     lightness plus a hairline, never from a glow: there is no raised and inset
+     shadow pair in this language. */
+  --color-cdp-surface-0: oklch(0.175 0.014 250);
+  --color-cdp-surface-1: oklch(0.235 0.017 250);
+  --color-cdp-surface-2: oklch(0.29 0.019 250);
+  --color-cdp-surface-3: oklch(0.355 0.021 250);
+
+  --color-cdp-fg: oklch(0.97 0.004 250);
+  --color-cdp-fg-muted: oklch(0.75 0.008 250);
+  --color-cdp-fg-subtle: oklch(0.6 0.009 250);
+
+  --color-cdp-line: oklch(1 0 0 / 0.1);
+  --color-cdp-line-strong: oklch(1 0 0 / 0.22);
+
+  /* One accent themes a whole subtree; sector-edge derives from it. */
+  --color-cdp-sector: #57c2e3;
+  --color-cdp-sector-edge: color-mix(in oklab, #57c2e3 45%, transparent);
+
   /* CDP brand palette (Figma: DIGITAL CASE STUDY DEMO) */
   --color-cdp-grey: #eaeaea;
   --color-cdp-blue: #57c2e3;
@@ -17,16 +38,32 @@
   --color-cdp-slate: #26303b;
   --color-cdp-slate-dark: #1c242d;
 
-  /* A neumorphic surface needs both halves of the pair: a white highlight from
-     the light source and a dark shadow from the opposite corner. One alone
-     reads as a drop shadow, not as moulded material. */
-  --shadow-cdp-neu-raised: -5px -5px 20px 0 #ffffff, 5px 5px 20px 0 rgb(0 0 0 / 0.3);
-  --shadow-cdp-neu-raised-lg: -10px -10px 30px 0 #ffffff, 10px 10px 30px 0 rgb(0 0 0 / 0.3);
-  --shadow-cdp-neu-inset:
-    inset -5px -5px 10px 0 rgb(255 255 255 / 0.5), inset 5px 5px 10px 0 rgb(0 0 0 / 0.1);
+  /* Lifted overlays only. Against these surfaces a cast shadow barely reads. */
+  --shadow-cdp-e1: 0 1px 2px oklch(0 0 0 / 0.3);
+  --shadow-cdp-e2: 0 4px 12px oklch(0 0 0 / 0.38);
+  --shadow-cdp-e3: 0 12px 32px oklch(0 0 0 / 0.46);
 
-  /* The same pair on the viewer's dark slate. A full-strength white highlight
-     blows out against slate, so both halves drop to a tenth. */
+  /* 44px is the WCAG 2.5.8 floor. Booth targets are read at arm's length on a
+     stand, so primary controls take the larger steps. */
+  --spacing-cdp-touch: 44px;
+  --spacing-cdp-touch-comfort: 56px;
+  --spacing-cdp-touch-booth: 64px;
+
+  --radius-cdp-sm: 8px;
+  --radius-cdp-md: 12px;
+  --radius-cdp-lg: 16px;
+  --radius-cdp-xl: 22px;
+  --radius-cdp-2xl: 28px;
+
+  --text-cdp-caption: 13px;
+  --text-cdp-body: 17px;
+  --text-cdp-title: 22px;
+  --text-cdp-header: 28px;
+  --text-cdp-display: 40px;
+
+  --ease-cdp-out: cubic-bezier(0.2, 0, 0, 1);
+  --ease-cdp-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+
   --shadow-cdp-neu-dark-raised:
     -5px -5px 15px 0 rgb(255 255 255 / 0.1), 5px 5px 15px 0 rgb(0 0 0 / 0.25);
   --shadow-cdp-neu-dark-inset:
@@ -36,8 +73,41 @@
 }
 
 /* Root surface for every screen in this case. Sets what a host app would
-   normally put on body, so the case carries its own baseline inside Storybook. */
+   normally put on body, so the case carries its own baseline inside Storybook.
+   color-scheme drives the native rendering of the password field and scrollbars. */
 @utility cdp-root {
-  color-scheme: light;
+  color-scheme: dark;
   font-family: var(--font-cdp-sans);
+  -webkit-font-smoothing: antialiased;
+
+  & :focus-visible {
+    outline: 2px solid var(--color-cdp-sector);
+    outline-offset: 3px;
+  }
+}
+
+/* Pressed state for every tappable surface. Hover is guarded because on iOS an
+   unguarded :hover sticks after a tap until the user taps somewhere else. */
+@utility cdp-pressable {
+  transition:
+    transform 100ms var(--ease-cdp-out),
+    border-color 150ms var(--ease-cdp-out);
+
+  &:active {
+    transform: scale(0.97);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      border-color: var(--color-cdp-line-strong);
+    }
+  }
+}
+
+/* Clear the notch, the home indicator and the rounded corners on a full-bleed
+   surface. */
+@utility cdp-safe {
+  padding-inline: max(32px, env(safe-area-inset-left), env(safe-area-inset-right));
+  padding-block-start: max(24px, env(safe-area-inset-top));
+  padding-block-end: max(32px, env(safe-area-inset-bottom));
 }

@@ -33,11 +33,11 @@ Tailwind v4 flattens every `@theme` block in the bundle into a single namespace,
 scoped to a case. Every token in `tokens.css` carries a `cdp-` segment directly after its Tailwind
 namespace, and every custom utility starts with `cdp-`:
 
-    --color-cdp-grey               ->  bg-cdp-grey
-    --shadow-cdp-neu-raised        ->  shadow-cdp-neu-raised
-    --shadow-cdp-neu-dark-inset    ->  shadow-cdp-neu-dark-inset
-    --font-cdp-sans                ->  font-cdp-sans
-    @utility cdp-root
+    --color-cdp-surface-0        ->  bg-cdp-surface-0
+    --spacing-cdp-touch-comfort  ->  h-cdp-touch-comfort
+    --radius-cdp-2xl             ->  rounded-cdp-2xl
+    --text-cdp-caption           ->  text-cdp-caption
+    @utility cdp-root, cdp-pressable, cdp-safe
 
 A later case picks its own segment and the two sets sit side by side.
 

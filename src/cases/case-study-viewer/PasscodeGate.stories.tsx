@@ -14,9 +14,9 @@ function StartLocked({ children }: { children: ReactNode }) {
 
 function ViewerHome() {
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center gap-3 bg-cdp-grey p-6 cdp-root text-cdp-slate">
-      <p className="text-2xl font-light">Case studies</p>
-      <p className="text-sm">Unlocked.</p>
+    <main className="flex min-h-dvh flex-col items-center justify-center gap-3 bg-cdp-surface-0 cdp-safe cdp-root text-cdp-fg">
+      <p className="text-cdp-header">Case studies</p>
+      <p className="text-cdp-caption text-cdp-fg-muted">Unlocked.</p>
     </main>
   );
 }
