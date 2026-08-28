@@ -1,0 +1,19 @@
+repos:
+  - repo: local
+    hooks:
+      - id: oxlint
+        name: oxlint
+        entry: bunx oxlint --deny-warnings
+        language: system
+        types_or: [ts, tsx, javascript, jsx]
+      - id: oxfmt
+        name: oxfmt
+        entry: bunx oxfmt
+        language: system
+        types_or: [ts, tsx, javascript, jsx, markdown]
+      - id: vitest
+        name: vitest
+        entry: bunx vitest run --passWithNoTests
+        language: system
+        pass_filenames: false
+        types_or: [ts, tsx]

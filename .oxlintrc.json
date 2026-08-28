@@ -1,0 +1,49 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "typescript",
+    "react",
+    "unicorn",
+    "oxc",
+    "react-perf",
+    "jsx-a11y",
+    "promise",
+    "import",
+    "vitest"
+  ],
+  "jsPlugins": [
+    {
+      "name": "better-tailwindcss",
+      "specifier": "eslint-plugin-better-tailwindcss"
+    }
+  ],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "perf": "warn"
+  },
+  "settings": {
+    "better-tailwindcss": {
+      "entryPoint": "src/styles/globals.css"
+    }
+  },
+  "rules": {
+    "react/react-in-jsx-scope": "off",
+    "react-perf/jsx-no-new-function-as-prop": "off",
+    "import/no-unassigned-import": ["warn", { "allow": ["**/*.css"] }],
+    "better-tailwindcss/no-duplicate-classes": "error",
+    "better-tailwindcss/no-conflicting-classes": "error",
+    "better-tailwindcss/no-unknown-classes": "warn",
+    "better-tailwindcss/no-deprecated-classes": "error",
+    "better-tailwindcss/enforce-consistent-class-order": "warn"
+  },
+  "overrides": [
+    {
+      "files": ["*.test.ts", "*.test.tsx"],
+      "rules": {
+        "unicorn/consistent-function-scoping": "off"
+      }
+    }
+  ],
+  "ignorePatterns": ["storybook-static/", "node_modules/"]
+}
