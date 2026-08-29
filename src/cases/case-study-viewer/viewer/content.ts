@@ -1,4 +1,5 @@
 import type { CaseStudyRef } from "./types";
+import { turntableChapters } from "./video/turntableChapters";
 
 const MODEL_BASE_URL = "/case-study-viewer/models";
 const MEDIA_BASE_URL = "/case-study-viewer/media";
@@ -86,19 +87,16 @@ export const theEye: CaseStudyRef = {
       },
       {
         kind: "video",
-        id: "delivery-walkthrough",
-        name: "Walkthrough",
-        src: "sample-clip.mp4",
-        poster: "sample-clip.jpg",
-        // Three even thirds of the 12s clip. Only the last one's end depends
-        // on the duration the player reports, which is why the track cannot be
-        // built until the video has loaded its metadata.
-        chapters: [
-          { id: "approach", name: "Approach", startTime: 0 },
-          { id: "insertion", name: "Insertion", startTime: 4 },
-          { id: "release", name: "Release", startTime: 8 },
-        ],
-        infoPrompt: "Scrub the chapters to jump between the stages of the delivery.",
+        id: "eye-turntable",
+        name: "Turntable",
+        src: "eye-turntable.mp4",
+        poster: "eye-turntable.jpg",
+        // One chapter per camera view above, starting where that view's run of
+        // frames starts. Only the last one's end depends on the duration the
+        // player reports, which is why the track cannot be built until the
+        // video has loaded its metadata.
+        chapters: turntableChapters,
+        infoPrompt: "Scrub the chapters to jump between the saved camera views.",
       },
     ],
   },

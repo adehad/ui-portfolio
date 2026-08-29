@@ -23,6 +23,7 @@ hotspot marker anchored to a point on the model.
     viewer/CameraRig.tsx       lerps the camera between saved views
     viewer/CameraViewRail.tsx  the carousel that steps through the saved shots
     viewer/video/              the player, its controls and the chapter track builder
+    scripts/gen-turntable.ts   renders and encodes the clip the video view plays
 
 A Media View is a discriminated union on `kind`. Camera views, layers and hotspots hang off the
 `model` kind and chapters off the `video` kind, so no component can reach for a field the active
@@ -38,11 +39,18 @@ element fetch them over HTTP at runtime.
 
 ## The chaptered video
 
-The third Media View is an mp4 with three chapters. No `.vtt` file ships: `chaptersToVtt` turns the
-authored chapters into a WebVTT document at runtime, and `VideoStage` hands it to Vidstack's
-`<Track kind="chapters">` as a Blob URL. It cannot be built any earlier than the player reporting a
-duration, because the last chapter runs to the end of the clip. Those cues are what splits the
-scrub bar into segments.
+The second Media View is an mp4 with one chapter per saved camera shot. No `.vtt` file ships:
+`chaptersToVtt` turns the authored chapters into a WebVTT document at runtime, and `VideoStage`
+hands it to Vidstack's `<Track kind="chapters">` as a Blob URL. It cannot be built any earlier than
+the player reporting a duration, because the last chapter runs to the end of the clip. Those cues
+are what splits the scrub bar into segments.
+
+**The clip is generated, and generating it is a manual step.** `bun run gen:turntable` drives the
+model view in a headless browser, poses the camera through the saved shots, reads each frame back
+off the canvas and encodes them. It is not wired into the build: it needs a browser and ffmpeg, it
+takes minutes, and re-encoding on every build would make this view's Chromatic snapshot diff on
+every run. `video/turntableChapters.ts` is written by that same run, so the chapter times are frame
+positions in the clip that actually ships rather than numbers that drift away from it.
 
 **The Canvas outlives the video.** Switching to the video unmounts `ModelScene`, not `ViewerCanvas`.
 Tearing the Canvas down would cost a fresh WebGL context and a full re-upload of the GLB on the way
@@ -122,9 +130,9 @@ about 37 KB.
 the content set can be replaced by an external `content.json`. There is one baked fixture here and
 nothing to validate, so `types.ts` carries the same shape as types alone.
 
-**The video is seed content.** In the source the clip belongs to a different case study entirely.
-It hangs off The Eye here so one page can show both stage kinds, and the chapter names are
-fictionalised along with the rest of the fixture.
+**The video is of this model.** In the source the video view's clip belongs to a different case
+study entirely. Here it is a turntable of the eye, so one page can show both stage kinds without
+the video view arguing with the model view beside it.
 
 **The back control is a button.** The source's is a Next `<Link>` back to the sector. There is no
 router here, so it keeps the label and the shape without the destination.
