@@ -32,6 +32,56 @@ bun run test             # vitest
 bun run typecheck        # tsc
 ```
 
+## Building one case
+
+The repo holds work for more than one client in a single deployable, so a link to the whole
+Storybook shows every case to whoever opens it. `SHOWCASE` narrows a build to one case, which lets
+a single build carry a single case:
+
+```sh
+SHOWCASE=case-study-viewer bun run build-storybook
+```
+
+The value is a directory name under `src/cases/`. A name that is not one fails the build and lists
+the ones that are, rather than quietly emitting an empty Storybook. With no `SHOWCASE` set the
+build carries everything.
+
+The narrowing is by directory, so a story whose title sits outside its case's own group, such as
+`03 Components/Sparkle Pen`, still ships with the case whose directory holds it.
+
+### What a filtered build carries
+
+`SHOWCASE=X` narrows both halves of the build:
+
+- stories, to the ones under `src/cases/X/`
+- static files, to the ones under `public/X/`, served at the URLs a full build serves them at
+
+A case need not own a directory under `public/`. One that does not gets a build with no static
+files at all, rather than a build falling back to the whole of `public/`.
+
+Check a build rather than trusting it:
+
+```sh
+bun run check:showcase                    # every case, each into a throwaway build
+bun run check:showcase case-study-viewer  # one case
+```
+
+The check builds with `SHOWCASE` set, walks every file the build emitted, and fails on any whose
+path or bytes name another case. Pass `--dir` to scan a build you already have instead of making
+one:
+
+```sh
+bun run check:showcase self-service-portal --dir storybook-static
+```
+
+What it does not cover:
+
+- A client named inside a case rather than by a case directory name. The check matches directory
+  names, so a client's name written into a story's own copy goes straight past it.
+- Code two cases share, such as `src/components/shared/`. That ships in every build by design.
+- Anything outside the build directory: git history, whatever else the host serves, and the story
+  IDs in a link.
+
 ## Layout
 
 ```
