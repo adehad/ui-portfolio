@@ -79,6 +79,7 @@ What it does not cover:
 - A client named inside a case rather than by a case directory name. The check matches directory
   names, so a client's name written into a story's own copy goes straight past it.
 - Code two cases share, such as `src/components/shared/`. That ships in every build by design.
+- The comparison page, which is deployed on its own and is in no Storybook build.
 - Anything outside the build directory: git history, whatever else the host serves, and the story
   IDs in a link.
 
@@ -94,6 +95,32 @@ src/
 
 Tailwind v4 is configured in CSS. Every theme token lives in the `@theme` block of
 `src/styles/globals.css`. There is no `tailwind.config.js`.
+
+## Comparing the two builds
+
+`tools/compare/index.html` loads one story ID into two iframes, one per deployment, and wipes
+between them with a slider. Onion mode cross-fades instead. The picker covers every story that
+exists on both branches, which is what identical story IDs across the two branches buys.
+
+It belongs to neither Storybook, so it is a third artefact deployed beside the two, not a file
+inside them. It sits outside `public/` because everything under `public/` is copied into every
+build, which would put a page naming every case into a build meant to carry one. Deploy the
+directory as its own static site:
+
+```sh
+bunx serve tools/compare
+```
+
+Any static host serves it; it is one file and needs no build step.
+
+Neither deployment URL is baked in. The page carries a `CONFIG` block at the top of its script,
+and both are overridable per link with `?before=` and `?after=`, or typed into the URLs panel on
+the page. A URL that is not reachable is reported on the page rather than left as a blank frame.
+
+`CONFIG.stories` names every case, and `SHOWCASE` does not narrow it. Narrowing the picker in the
+browser would hide the names while still shipping them, which is the assurance without the
+substance, so keep the deployment where only you can reach it. To walk one client through their
+own before and after, deploy a copy whose `CONFIG.stories` holds only their stories.
 
 ## Story titles
 

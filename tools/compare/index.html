@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>before / after</title>
+    <style>
+      :root {
+        --bg: #0d1014;
+        --panel: #171c22;
+        --line: #2b333d;
+        --text: #e7ecf2;
+        --muted: #93a0ad;
+        --accent: #4fd1c5;
+        --warn: #ffb4a2;
+        --wipe: 50%;
+        --onion: 1;
+        --scale: 1;
+        --logical-w: 1280px;
+        --logical-h: 800px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          14px/1.4 ui-sans-serif,
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Arial,
+          sans-serif;
+        -webkit-text-size-adjust: 100%;
+      }
+
+      header,
+      footer {
+        flex: 0 0 auto;
+        background: var(--panel);
+        border-color: var(--line);
+        border-style: solid;
+      }
+
+      header {
+        border-width: 0 0 1px;
+        padding: 8px 10px;
+        padding-top: calc(8px + env(safe-area-inset-top, 0px));
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+
+      footer {
+        border-width: 1px 0 0;
+        padding: 8px 14px;
+        padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+      }
+
+      select,
+      input,
+      button {
+        font: inherit;
+        color: var(--text);
+        background: #0f1419;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 8px 10px;
+        min-height: 40px;
+      }
+
+      select {
+        flex: 1 1 10rem;
+        min-width: 0;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      button[aria-pressed="true"] {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      .modes {
+        display: flex;
+        gap: 6px;
+      }
+
+      #settings-toggle {
+        margin-inline-start: auto;
+      }
+
+      #settings {
+        flex: 1 0 100%;
+        display: grid;
+        gap: 8px;
+        padding-top: 4px;
+      }
+
+      #settings[hidden] {
+        display: none;
+      }
+
+      #settings label {
+        display: grid;
+        gap: 4px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      #settings input {
+        width: 100%;
+      }
+
+      .note {
+        color: var(--muted);
+        font-size: 12px;
+        margin: 0;
+      }
+
+      .note code {
+        word-break: break-all;
+      }
+
+      /* Flex and not grid: an absolutely positioned child of a grid container
+         is laid out against the grid area, which the oversized stage stretches
+         past the viewport, taking the labels and the fault report off screen. */
+      main {
+        flex: 1 1 auto;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      #stage {
+        position: relative;
+        flex: 0 0 auto;
+        width: var(--logical-w);
+        height: var(--logical-h);
+        transform: scale(var(--scale));
+        transform-origin: center center;
+        background: #000;
+        outline: 1px solid var(--line);
+      }
+
+      .pane {
+        position: absolute;
+        inset: 0;
+        background: #12171d;
+      }
+
+      .pane iframe {
+        width: 100%;
+        height: 100%;
+        border: 0;
+        display: block;
+        background: #fff;
+      }
+
+      .pane[data-fault] iframe {
+        visibility: hidden;
+      }
+
+      #pane-after {
+        clip-path: inset(0 0 0 var(--wipe));
+      }
+
+      body[data-mode="onion"] #pane-after {
+        clip-path: none;
+        opacity: var(--onion);
+      }
+
+      #handle {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: var(--wipe);
+        width: 2px;
+        margin-left: -1px;
+        background: var(--accent);
+        pointer-events: none;
+      }
+
+      body[data-mode="onion"] #handle {
+        display: none;
+      }
+
+      /* Outside #stage so the labels and the fault report keep their own size
+         while the stage is scaled down to fit a phone. */
+      .tag {
+        position: absolute;
+        top: 8px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: rgb(0 0 0 / 65%);
+        color: var(--text);
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        pointer-events: none;
+      }
+
+      /* `inset(0 0 0 --wipe)` trims the after pane from the left, so before is
+         always the left of the two. */
+      .tag--before {
+        left: 8px;
+      }
+
+      .tag--after {
+        right: 8px;
+      }
+
+      #faults {
+        position: absolute;
+        inset: auto 8px 8px;
+        display: grid;
+        gap: 8px;
+        justify-items: center;
+      }
+
+      #faults:empty {
+        display: none;
+      }
+
+      .fault {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        justify-content: center;
+        max-width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--warn);
+        border-radius: 10px;
+        background: #1b1113;
+      }
+
+      .fault p {
+        margin: 0;
+        min-width: 0;
+      }
+
+      .fault strong {
+        color: var(--warn);
+      }
+
+      .fault code {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        word-break: break-all;
+      }
+
+      .slider-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      #wipe {
+        flex: 1 1 auto;
+        appearance: none;
+        background: transparent;
+        min-height: 44px;
+        padding: 0;
+        border: 0;
+      }
+
+      #wipe::-webkit-slider-runnable-track {
+        height: 6px;
+        border-radius: 3px;
+        background: var(--line);
+      }
+
+      #wipe::-moz-range-track {
+        height: 6px;
+        border-radius: 3px;
+        background: var(--line);
+      }
+
+      #wipe::-webkit-slider-thumb {
+        appearance: none;
+        width: 28px;
+        height: 28px;
+        margin-top: -11px;
+        border-radius: 50%;
+        background: var(--accent);
+        border: 0;
+      }
+
+      #wipe::-moz-range-thumb {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--accent);
+        border: 0;
+      }
+
+      .ends {
+        display: flex;
+        justify-content: space-between;
+        color: var(--muted);
+        font-size: 12px;
+      }
+    </style>
+  </head>
+
+  <body data-mode="wipe">
+    <header>
+      <select id="story" aria-label="Story"></select>
+      <div class="modes" role="group" aria-label="Blend mode">
+        <button type="button" id="mode-wipe" aria-pressed="true">Wipe</button>
+        <button type="button" id="mode-onion" aria-pressed="false">Onion</button>
+      </div>
+      <button type="button" id="settings-toggle" aria-expanded="false" aria-controls="settings">
+        URLs
+      </button>
+
+      <div id="settings" hidden>
+        <label>
+          before deployment
+          <input id="url-before" type="url" inputmode="url" spellcheck="false" />
+        </label>
+        <label>
+          after deployment
+          <input id="url-after" type="url" inputmode="url" spellcheck="false" />
+        </label>
+        <button type="button" id="apply">Apply</button>
+        <p class="note">
+          Also settable per link:
+          <code
+            >?before=https://…&amp;after=https://…&amp;story=&lt;id&gt;&amp;mode=onion&amp;wipe=50</code
+          >
+        </p>
+      </div>
+    </header>
+
+    <main>
+      <div id="stage">
+        <div class="pane" id="pane-before"><iframe id="frame-before" title="before"></iframe></div>
+        <div class="pane" id="pane-after"><iframe id="frame-after" title="after"></iframe></div>
+        <div id="handle"></div>
+      </div>
+      <span class="tag tag--before">before</span>
+      <span class="tag tag--after">after</span>
+      <div id="faults" role="status" aria-live="polite"></div>
+    </main>
+
+    <footer>
+      <div class="slider-row">
+        <input id="wipe" type="range" min="0" max="100" step="1" value="50" aria-label="Wipe" />
+        <output id="readout">50%</output>
+      </div>
+      <div class="ends"><span>all after</span><span>all before</span></div>
+    </footer>
+
+    <script>
+      // Chromatic serves one deployment per branch, shaped roughly
+      // https://<branch>--<appid>.chromatic.com. Fill these two in once the app
+      // id exists; until then set them per link with ?before= and ?after=, or
+      // through the URLs panel on the page.
+      const CONFIG = {
+        before: "http://localhost:6101",
+        after: "http://localhost:6102",
+        // A story ID is identical on both branches by design, which is the only
+        // reason one id can address both iframes.
+        stories: [
+          { label: "Passcode Gate", id: "01-case-study-viewer-passcode-gate--default" },
+          { label: "Case Study Page", id: "01-case-study-viewer-case-study-page--default" },
+          { label: "Create", id: "02-self-service-portal-create--default" },
+        ],
+        logicalWidth: 1280,
+        logicalHeight: 800,
+        loadTimeoutMs: 15000,
+      };
+
+      function clampWipe(raw) {
+        const value = Number(raw);
+        return Number.isFinite(value) ? Math.min(100, Math.max(0, Math.round(value))) : 50;
+      }
+
+      const query = new URLSearchParams(location.search);
+      const state = {
+        before: query.get("before") || CONFIG.before,
+        after: query.get("after") || CONFIG.after,
+        story: query.get("story") || CONFIG.stories[0].id,
+        mode: query.get("mode") === "onion" ? "onion" : "wipe",
+        wipe: clampWipe(query.get("wipe") ?? 50),
+      };
+
+      const el = {
+        body: document.body,
+        root: document.documentElement,
+        stage: document.getElementById("stage"),
+        story: document.getElementById("story"),
+        wipe: document.getElementById("wipe"),
+        readout: document.getElementById("readout"),
+        faults: document.getElementById("faults"),
+        settings: document.getElementById("settings"),
+        settingsToggle: document.getElementById("settings-toggle"),
+        apply: document.getElementById("apply"),
+        urlBefore: document.getElementById("url-before"),
+        urlAfter: document.getElementById("url-after"),
+        modeWipe: document.getElementById("mode-wipe"),
+        modeOnion: document.getElementById("mode-onion"),
+      };
+
+      const sides = {
+        before: {
+          pane: document.getElementById("pane-before"),
+          frame: null,
+          timer: 0,
+          fault: null,
+        },
+        after: { pane: document.getElementById("pane-after"), frame: null, timer: 0, fault: null },
+      };
+      sides.before.frame = document.getElementById("frame-before");
+      sides.after.frame = document.getElementById("frame-after");
+
+      function storyUrl(base, id) {
+        // Throws on anything that is not a URL, which is how a mistyped
+        // deployment is caught before the iframe silently swallows it.
+        const url = new URL("iframe.html", base.endsWith("/") ? base : `${base}/`);
+        url.searchParams.set("id", id);
+        url.searchParams.set("viewMode", "story");
+        return url.href;
+      }
+
+      function renderFaults() {
+        el.faults.replaceChildren();
+        for (const [name, side] of Object.entries(sides)) {
+          if (!side.fault) continue;
+          const box = document.createElement("div");
+          box.className = "fault";
+          const text = document.createElement("p");
+          text.innerHTML = `<strong>The ${name} deployment did not load.</strong> Check its URL, or that the build is deployed.`;
+          const url = document.createElement("code");
+          url.textContent = side.fault;
+          text.append(url);
+          const retry = document.createElement("button");
+          retry.type = "button";
+          retry.textContent = "Retry";
+          retry.addEventListener("click", () => loadSide(name));
+          box.append(text, retry);
+          el.faults.append(box);
+        }
+      }
+
+      function markFault(name, detail) {
+        const side = sides[name];
+        clearTimeout(side.timer);
+        side.fault = detail;
+        side.pane.dataset.fault = "true";
+        renderFaults();
+      }
+
+      function clearFault(name) {
+        const side = sides[name];
+        side.fault = null;
+        delete side.pane.dataset.fault;
+        renderFaults();
+      }
+
+      function loadSide(name) {
+        const side = sides[name];
+        clearTimeout(side.timer);
+        clearFault(name);
+
+        let href;
+        try {
+          href = storyUrl(state[name], state.story);
+        } catch {
+          side.frame.removeAttribute("src");
+          markFault(name, `${state[name] || "(blank)"} is not a URL`);
+          return;
+        }
+
+        side.frame.src = href;
+        side.timer = setTimeout(() => markFault(name, href), CONFIG.loadTimeoutMs);
+        // A cross-origin iframe reports nothing about what it loaded, so a
+        // separate no-cors request is what tells an unreachable host from a slow
+        // one. It resolves opaque on any reply, so only a network level failure
+        // lands in the catch.
+        fetch(href, { mode: "no-cors", cache: "no-store" }).catch(() => markFault(name, href));
+      }
+
+      for (const [name, side] of Object.entries(sides)) {
+        side.frame.addEventListener("load", () => clearTimeout(side.timer));
+        side.frame.addEventListener("error", () => markFault(name, side.frame.src));
+      }
+
+      function writeQuery() {
+        const next = new URLSearchParams();
+        next.set("story", state.story);
+        next.set("mode", state.mode);
+        next.set("wipe", String(state.wipe));
+        if (state.before !== CONFIG.before) next.set("before", state.before);
+        if (state.after !== CONFIG.after) next.set("after", state.after);
+        history.replaceState(null, "", `${location.pathname}?${next}`);
+      }
+
+      function paint() {
+        el.body.dataset.mode = state.mode;
+        el.root.style.setProperty("--wipe", `${state.wipe}%`);
+        el.root.style.setProperty("--onion", String(1 - state.wipe / 100));
+        el.wipe.value = String(state.wipe);
+        el.readout.textContent = `${state.wipe}%`;
+        el.modeWipe.setAttribute("aria-pressed", String(state.mode === "wipe"));
+        el.modeOnion.setAttribute("aria-pressed", String(state.mode === "onion"));
+      }
+
+      function fit() {
+        const area = el.stage.parentElement.getBoundingClientRect();
+        const scale = Math.min(
+          1,
+          area.width / CONFIG.logicalWidth,
+          area.height / CONFIG.logicalHeight,
+        );
+        el.root.style.setProperty("--scale", String(scale));
+      }
+
+      function reload() {
+        loadSide("before");
+        loadSide("after");
+      }
+
+      for (const story of CONFIG.stories) {
+        const option = document.createElement("option");
+        option.value = story.id;
+        option.textContent = story.label;
+        el.story.append(option);
+      }
+      el.story.value = state.story;
+      el.root.style.setProperty("--logical-w", `${CONFIG.logicalWidth}px`);
+      el.root.style.setProperty("--logical-h", `${CONFIG.logicalHeight}px`);
+      el.urlBefore.value = state.before;
+      el.urlAfter.value = state.after;
+
+      el.story.addEventListener("change", () => {
+        state.story = el.story.value;
+        writeQuery();
+        reload();
+      });
+
+      el.wipe.addEventListener("input", () => {
+        state.wipe = clampWipe(el.wipe.value);
+        paint();
+        writeQuery();
+      });
+
+      el.modeWipe.addEventListener("click", () => {
+        state.mode = "wipe";
+        paint();
+        writeQuery();
+      });
+
+      el.modeOnion.addEventListener("click", () => {
+        state.mode = "onion";
+        paint();
+        writeQuery();
+      });
+
+      el.settingsToggle.addEventListener("click", () => {
+        el.settings.hidden = !el.settings.hidden;
+        el.settingsToggle.setAttribute("aria-expanded", String(!el.settings.hidden));
+      });
+
+      el.apply.addEventListener("click", () => {
+        state.before = el.urlBefore.value.trim();
+        state.after = el.urlAfter.value.trim();
+        writeQuery();
+        reload();
+      });
+
+      addEventListener("resize", fit);
+      paint();
+      fit();
+      writeQuery();
+      reload();
+    </script>
+  </body>
+</html>
