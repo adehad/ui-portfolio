@@ -99,8 +99,15 @@ Tailwind v4 is configured in CSS. Every theme token lives in the `@theme` block 
 ## Comparing the two builds
 
 `tools/compare/index.html` loads one story ID into two iframes, one per deployment, and wipes
-between them with a slider. Onion mode cross-fades instead. The picker covers every story that
-exists on both branches, which is what identical story IDs across the two branches buys.
+between them with a slider. Onion mode cross-fades instead. The picker covers every story in either
+build. Inside each group the stories both builds have come first, then a dimmed `after only` or
+`before only` line and the ones a single build has. An `optgroup` cannot nest, so that line is a
+disabled `<option>`; a screen reader reads it out as a dimmed option rather than as a heading.
+Pairing at all is what identical story IDs across the two branches buy.
+
+Picking a story only one build has shows that build on its own, says in the footer which build is
+without it, and disables the slider and the mode buttons, since there is nothing to compare. That is
+not reported as a fault: the fault report is for a deployment that failed to load.
 
 It belongs to neither Storybook, so it is a third artefact deployed beside the two, not a file
 inside them. It sits outside `public/` because everything under `public/` is copied into every

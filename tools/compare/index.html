@@ -96,6 +96,13 @@
         color: var(--accent);
       }
 
+      button:disabled,
+      input:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        border-style: dashed;
+      }
+
       .modes {
         display: flex;
         gap: 6px;
@@ -202,6 +209,20 @@
         display: none;
       }
 
+      /* A story only one build has leaves nothing to wipe between, so the side
+         without it comes out of the stage and the other fills it. Same
+         specificity as the onion rules above, so it has to sit after them. */
+      body[data-only] #pane-after {
+        clip-path: none;
+        opacity: 1;
+      }
+
+      body[data-only] #handle,
+      body[data-only="before"] #pane-after,
+      body[data-only="after"] #pane-before {
+        display: none;
+      }
+
       /* Outside #stage so the labels and the fault report keep their own size
          while the stage is scaled down to fit a phone. */
       .tag {
@@ -225,6 +246,11 @@
 
       .tag--after {
         right: 8px;
+      }
+
+      body[data-only="before"] .tag--after,
+      body[data-only="after"] .tag--before {
+        display: none;
       }
 
       #faults {
@@ -266,6 +292,15 @@
         color: var(--muted);
         font-size: 12px;
         word-break: break-all;
+      }
+
+      #unpaired {
+        margin: 0 0 10px;
+        padding: 8px 10px;
+        border: 1px solid var(--line);
+        border-inline-start: 3px solid var(--accent);
+        border-radius: 8px;
+        background: #0f1419;
       }
 
       .slider-row {
@@ -312,12 +347,22 @@
         background: var(--accent);
         border: 0;
       }
+
+      /* One rule each: a selector list holding an unknown pseudo-element is
+         dropped whole, so the two vendor prefixes cannot share one. */
+      #wipe:disabled::-webkit-slider-thumb {
+        background: var(--muted);
+      }
+
+      #wipe:disabled::-moz-range-thumb {
+        background: var(--muted);
+      }
     </style>
   </head>
 
   <body data-mode="wipe">
     <header>
-      <select id="story" aria-label="Story"></select>
+      <select id="story" aria-label="Story" aria-describedby="unpaired"></select>
       <div class="modes" role="group" aria-label="Comparison mode">
         <button type="button" id="mode-wipe" aria-pressed="true">Wipe</button>
         <button type="button" id="mode-onion" aria-pressed="false">Crossfade</button>
@@ -357,6 +402,7 @@
     </main>
 
     <footer>
+      <p id="unpaired" role="status" aria-live="polite" hidden></p>
       <div class="slider-row">
         <input
           id="wipe"
@@ -396,6 +442,7 @@
         story: query.get("story") || "",
         mode: query.get("mode") === "onion" ? "onion" : "wipe",
         wipe: clampWipe(query.get("wipe") ?? 50),
+        only: "",
       };
 
       const el = {
@@ -406,6 +453,7 @@
         wipe: document.getElementById("wipe"),
         readout: document.getElementById("readout"),
         faults: document.getElementById("faults"),
+        unpaired: document.getElementById("unpaired"),
         settings: document.getElementById("settings"),
         settingsToggle: document.getElementById("settings-toggle"),
         apply: document.getElementById("apply"),
@@ -454,7 +502,8 @@
           retry.textContent = "Retry";
           retry.addEventListener("click", () => {
             indexCache.delete(state[name]);
-            loadSide(name);
+            void populateStories();
+            void reload();
           });
           box.append(text, retry);
           el.faults.append(box);
@@ -525,37 +574,67 @@
         return segments;
       }
 
+      function storyOption(item) {
+        const option = document.createElement("option");
+        option.value = item.id;
+        option.textContent = item.leaf;
+        return option;
+      }
+
+      // An `optgroup` cannot nest, so the stories only one side has are headed
+      // by a disabled option inside the group they belong to. A screen reader
+      // reads that line out as a dimmed option, not as a heading.
+      function sideHeading(side) {
+        const option = document.createElement("option");
+        option.disabled = true;
+        option.textContent = `${side} only`;
+        return option;
+      }
+
+      function emptyGroup() {
+        return { paired: [], before: [], after: [] };
+      }
+
       async function populateStories() {
         const [br, af] = await Promise.all([readIndex(state.before), readIndex(state.after)]);
         const b = br.ok ? br.entries : null;
-        const paired = b && af.ok ? Object.keys(b).filter((id) => id in af.entries) : [];
+        const a = af.ok ? af.entries : null;
+        const paired = b && a ? Object.keys(b).filter((id) => id in a) : [];
         if (!state.story && paired.length) {
           state.story = paired[0];
           writeQuery();
-          reload();
+          void reload();
         }
-        const ids = paired.length ? paired : state.story ? [state.story] : [];
+        // Both indexes have to be readable before a story can be called
+        // unpaired. With one deployment down, every story on the other would
+        // look one-sided, so the picker falls back to the current story.
+        const known = Boolean(b && a);
+        const ids = known ? [...new Set([...Object.keys(b), ...Object.keys(a)])] : [];
+        if (!known && state.story) ids.push(state.story);
         el.story.replaceChildren();
         const groups = new Map();
         for (const id of ids) {
-          const path = b && b[id] ? storyPath(b[id]) : [id];
+          const entry = (b && b[id]) || (a && a[id]);
+          const path = entry ? storyPath(entry) : [id];
           const group = path.length > 1 ? path[0] : "";
           const leaf = path.length > 1 ? path.slice(1).join(" / ") : path[0];
-          if (!groups.has(group)) groups.set(group, []);
-          groups.get(group).push({ id, leaf });
+          let bucket = "paired";
+          if (known && !(b[id] && a[id])) bucket = b[id] ? "before" : "after";
+          if (!groups.has(group)) groups.set(group, emptyGroup());
+          groups.get(group)[bucket].push({ id, leaf });
         }
         if (!ids.includes(state.story)) {
-          if (!groups.has("")) groups.set("", []);
-          groups.get("").push({ id: state.story, leaf: state.story });
+          if (!groups.has("")) groups.set("", emptyGroup());
+          groups.get("").paired.push({ id: state.story, leaf: state.story });
         }
-        for (const [group, items] of groups) {
+        for (const [group, buckets] of groups) {
           const parent = group ? document.createElement("optgroup") : el.story;
           if (group) parent.label = group;
-          for (const item of items) {
-            const option = document.createElement("option");
-            option.value = item.id;
-            option.textContent = item.leaf;
-            parent.append(option);
+          for (const item of buckets.paired) parent.append(storyOption(item));
+          for (const side of ["before", "after"]) {
+            if (!buckets[side].length) continue;
+            parent.append(sideHeading(side));
+            for (const item of buckets[side]) parent.append(storyOption(item));
           }
           if (group) el.story.append(parent);
         }
@@ -573,6 +652,25 @@
           return;
         }
         clearFault(name);
+      }
+
+      // The one side holding the story, or "" when both hold it, neither holds
+      // it, or an index could not be read to say.
+      async function soleSide() {
+        if (!state.story) return "";
+        const [br, af] = await Promise.all([readIndex(state.before), readIndex(state.after)]);
+        if (!br.ok || !af.ok) return "";
+        const inBefore = Boolean(br.entries[state.story]);
+        const inAfter = Boolean(af.entries[state.story]);
+        if (inBefore === inAfter) return "";
+        return inBefore ? "before" : "after";
+      }
+
+      function blankSide(name) {
+        const side = sides[name];
+        clearTimeout(side.timer);
+        clearFault(name);
+        side.frame.src = "about:blank";
       }
 
       function loadSide(name) {
@@ -619,10 +717,28 @@
         el.root.style.setProperty("--split", `${100 - state.wipe}%`);
         el.root.style.setProperty("--onion", String(state.wipe / 100));
         el.wipe.value = String(state.wipe);
-        el.readout.textContent = `${state.wipe}% after`;
+        el.readout.textContent = state.only ? "" : `${state.wipe}% after`;
         el.wipe.setAttribute("aria-valuetext", `${100 - state.wipe}% before, ${state.wipe}% after`);
         el.modeWipe.setAttribute("aria-pressed", String(state.mode === "wipe"));
         el.modeOnion.setAttribute("aria-pressed", String(state.mode === "onion"));
+      }
+
+      function paintPairing() {
+        const only = state.only;
+        if (only) el.body.dataset.only = only;
+        else delete el.body.dataset.only;
+        for (const control of [el.wipe, el.modeWipe, el.modeOnion]) {
+          control.disabled = Boolean(only);
+        }
+        el.unpaired.hidden = !only;
+        if (!only) {
+          el.unpaired.replaceChildren();
+          return;
+        }
+        const missing = only === "before" ? "after" : "before";
+        el.unpaired.textContent =
+          `Only the ${only} build has this story. The ${missing} build does not, ` +
+          `so there is nothing to wipe or blend between.`;
       }
 
       function fit() {
@@ -635,9 +751,20 @@
         el.root.style.setProperty("--scale", String(scale));
       }
 
-      function reload() {
-        loadSide("before");
-        loadSide("after");
+      let loadToken = 0;
+
+      async function reload() {
+        const token = ++loadToken;
+        const only = await soleSide();
+        // A story can be picked while the indexes for the last one are still
+        // being read, and the newest answer is the one that counts.
+        if (token !== loadToken) return;
+        state.only = only;
+        paintPairing();
+        for (const name of Object.keys(sides)) {
+          if (only && name !== only) blankSide(name);
+          else loadSide(name);
+        }
       }
 
       void populateStories();
@@ -649,7 +776,7 @@
       el.story.addEventListener("change", () => {
         state.story = el.story.value;
         writeQuery();
-        reload();
+        void reload();
       });
 
       el.wipe.addEventListener("input", () => {
@@ -681,14 +808,14 @@
         writeQuery();
         indexCache.clear();
         void populateStories();
-        reload();
+        void reload();
       });
 
       addEventListener("resize", fit);
       paint();
       fit();
       writeQuery();
-      reload();
+      void reload();
     </script>
   </body>
 </html>
