@@ -2,6 +2,14 @@
    .ssp-root and the component works wherever it is mounted. --ssp-spark comes
    from the theme block; the currentColor fallback covers a host without one. */
 
+/* An unregistered custom property is not interpolable, so the chase's parameter
+   has to be declared before a keyframe can animate it. */
+@property --ssp-chase-p {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
 .ssp-sparkle-host {
   position: relative;
   display: block;
@@ -14,10 +22,20 @@
   /* Anchors the stars to the control they mark, so stacked pens still read as
      one glow per new element. Static, so reduced motion keeps it. */
   &.ssp-sparkle-active {
-    border-radius: 4px;
+    border-radius: var(--ssp-radius, 4px);
     box-shadow:
       0 0 0 1px color-mix(in srgb, var(--ssp-spark) 55%, transparent),
       0 0 10px color-mix(in srgb, var(--ssp-spark) 35%, transparent);
+  }
+
+  /* The ring already outlines the host, so the 1px spread underneath it would
+     only thicken one edge of the same line. */
+  &.ssp-sparkle-chased {
+    box-shadow: 0 0 10px color-mix(in srgb, var(--ssp-spark) 35%, transparent);
+  }
+
+  &.ssp-sparkle-working {
+    --ssp-chase-period: 0.9s;
   }
 }
 
@@ -44,7 +62,7 @@
   position: absolute;
   top: calc(var(--ssp-y) * 1%);
   left: calc(var(--ssp-x) * 1%);
-  width: calc(var(--ssp-size) * 1rem);
+  width: calc(var(--ssp-size) * var(--ssp-star-scale, 1) * 1rem);
   aspect-ratio: 1;
   opacity: var(--ssp-alpha);
   transform-origin: var(--ssp-origin-x) var(--ssp-origin-y);
@@ -66,6 +84,56 @@
   }
 }
 
+/* A spark chasing the host's edge. The two masks paint the padding band only:
+   the second covers the whole box, the first covers the content box, and
+   excluding one from the other leaves the ring. That is what lets the chase sit
+   on a host whose children are opaque, which a filled element behind them
+   could not do.
+
+   The ring sits one inset outside the host and carries the matching larger
+   radius, so it traces the host's corners rather than cutting across them. */
+.ssp-sparkle-chase {
+  position: absolute;
+  inset: calc(-1 * var(--ssp-chase-inset, 2px));
+  border-radius: calc(var(--ssp-radius, 4px) + var(--ssp-chase-inset, 2px));
+  padding: var(--ssp-chase-width, 2px);
+
+  /* The spark's angle is computed, not animated. Sweeping the angle itself at a
+     constant rate is what makes the spot crawl along a long edge and then bolt
+     round a corner, because equal angles cover very unequal distances on a wide
+     box. So --ssp-chase-p runs 0 to 1 linearly and the angle comes out of it
+     every frame: the two clamps walk a rectangle's edges with ramps and holds,
+     and atan2 turns that point back into an angle. SparklePen measures the host
+     and sets the aspect and the two k values.
+
+     atan2 returns the angle from the x axis while a conic gradient measures from
+     12 o'clock, hence the 90deg. Without it the correction lands a quarter turn
+     from the edge it was computed for, which on a wide box is worse than not
+     correcting at all. */
+  --ssp-chase-u: calc(var(--ssp-chase-p) * 1turn);
+  --ssp-chase-sx: clamp(-1, calc(var(--ssp-chase-kx, 1) * sin(var(--ssp-chase-u))), 1);
+  --ssp-chase-sy: clamp(-1, calc(-1 * var(--ssp-chase-ky, 1) * cos(var(--ssp-chase-u))), 1);
+  background: conic-gradient(
+    from
+      calc(
+        90deg + atan2(var(--ssp-chase-sy), calc(var(--ssp-chase-aspect, 1) * var(--ssp-chase-sx)))
+      ),
+    transparent 0deg 290deg,
+    color-mix(in srgb, var(--ssp-spark) 35%, transparent) 335deg,
+    var(--ssp-spark) 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  animation: ssp-chase-spin var(--ssp-chase-period, 3.6s) linear infinite;
+}
+
 @keyframes ssp-spark-float {
   to {
     rotate: 360deg;
@@ -82,12 +150,38 @@
   }
 }
 
-/* The class comes from matchMedia so a test can assert it; the media query below
-   is the fallback for anything that renders without the JS check. */
-.ssp-particle-pen.ssp-reduced-motion .ssp-particle {
-  animation: none;
+@keyframes ssp-chase-spin {
+  to {
+    --ssp-chase-p: 1;
+  }
+}
 
-  path {
+/* Without atan2 in a gradient there is no computed angle to spin, and rotating
+   this element instead would swing the ring off a host that is not square. An
+   even outline is the honest fallback. A browser that has atan2 but cannot
+   animate a registered property parks the ring, which lands in the same place. */
+@supports not (background: conic-gradient(from atan2(1, 2), red, blue)) {
+  .ssp-sparkle-chase {
+    background: color-mix(in srgb, var(--ssp-spark) 70%, transparent);
+    animation: none;
+  }
+}
+
+/* The class comes from matchMedia so a test can assert it; the media query below
+   is the fallback for anything that renders without the JS check. A stopped
+   chase would leave one bright arc parked on a corner, so the ring flattens to
+   an even outline instead. */
+.ssp-reduced-motion {
+  .ssp-particle {
+    animation: none;
+
+    path {
+      animation: none;
+    }
+  }
+
+  .ssp-sparkle-chase {
+    background: color-mix(in srgb, var(--ssp-spark) 70%, transparent);
     animation: none;
   }
 }
@@ -99,5 +193,10 @@
     path {
       animation: none;
     }
+  }
+
+  .ssp-sparkle-chase {
+    background: color-mix(in srgb, var(--ssp-spark) 70%, transparent);
+    animation: none;
   }
 }

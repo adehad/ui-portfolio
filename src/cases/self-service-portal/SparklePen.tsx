@@ -1,4 +1,13 @@
-import { type CSSProperties, type ReactNode, useMemo } from "react";
+import {
+  type CSSProperties,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+} from "react";
+import { chaseGeometry } from "@/cases/self-service-portal/chaseGeometry";
 import "@/cases/self-service-portal/SparklePen.scss";
 import { hashSeed, makeRandom } from "@/cases/self-service-portal/seededRandom";
 
@@ -52,6 +61,12 @@ export type SparklePenProps = {
   index?: number;
   /** Both the field's randomness and when it respawns. */
   seedKey?: string | undefined;
+  /** Multiplies every star's size. The component demo runs at 2. */
+  starScale?: number;
+  /** Send a spark chasing round the host's edge as well as through the field. */
+  chase?: boolean;
+  /** Quicken the chase and brighten the field while the value settles. */
+  working?: boolean;
   /** Overrides what matchMedia reports, so a story can show the static variant. */
   reducedMotion?: boolean;
   className?: string;
@@ -59,31 +74,88 @@ export type SparklePenProps = {
 };
 
 /** Drifting, twinkling stars drawn behind the children to mark a value that does
-    not exist yet. The overlay is absolutely positioned and click-through, so it
-    neither shifts layout nor swallows pointer events, and the host carries a
-    spark-coloured glow that ties the stars to the control they belong to. */
+    not exist yet, and optionally a spark chasing the host's edge. Both overlays
+    are absolutely positioned and click-through, so they neither shift layout nor
+    swallow pointer events, and the host carries a spark-coloured glow that ties
+    the stars to the control they belong to. */
 export function SparklePen({
   active,
   count = 20,
   index = 0,
   seedKey,
+  starScale = 1,
+  chase = false,
+  working = false,
   reducedMotion,
   className,
   children,
 }: SparklePenProps) {
   const reduced = useMemo(() => reducedMotion ?? prefersReducedMotion(), [reducedMotion]);
+  const hostRef = useRef<HTMLDivElement>(null);
   const particles = useMemo(() => makeParticles(count, seedKey ?? "ssp-spark"), [count, seedKey]);
-  const penStyle = useMemo(() => ({ "--ssp-spark-i": index }) as CSSProperties, [index]);
+  const penStyle = useMemo(
+    () => ({ "--ssp-spark-i": index, "--ssp-star-scale": starScale }) as CSSProperties,
+    [index, starScale],
+  );
 
-  const hostClass = `ssp-sparkle-host${active ? " ssp-sparkle-active" : ""}${
-    className ? ` ${className}` : ""
-  }`;
+  /** The chase's angle formula is tuned by the host's proportions, so they are
+      measured rather than declared. Written straight onto the node, so a resize
+      costs no render and the ring stays even while the host is dragged. */
+  const applyGeometry = useCallback(
+    (width: number, height: number) => {
+      const host = hostRef.current;
+      if (!host || !active || !chase) return;
+      const { aspect, kx, ky } = chaseGeometry(width, height);
+      host.style.setProperty("--ssp-chase-aspect", aspect.toFixed(3));
+      host.style.setProperty("--ssp-chase-kx", kx.toFixed(3));
+      host.style.setProperty("--ssp-chase-ky", ky.toFixed(3));
+    },
+    [active, chase],
+  );
+
+  /** Every commit, because a prop that reshapes the host lands as a render and
+      no observer notification is guaranteed to follow it. */
+  useLayoutEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+    const rect = host.getBoundingClientRect();
+    applyGeometry(rect.width, rect.height);
+  });
+
+  /** Resizes nobody rendered: the viewport, a font landing, a sibling growing.
+      The size comes off the entry, never from a layout read inside the callback,
+      which would force layout mid-observation. */
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host || !active || !chase || typeof ResizeObserver === "undefined") return;
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const border = entry.borderBoxSize.at(0);
+        if (border) applyGeometry(border.inlineSize, border.blockSize);
+        else applyGeometry(entry.contentRect.width, entry.contentRect.height);
+      }
+    });
+    observer.observe(host, { box: "border-box" });
+    return () => observer.disconnect();
+  }, [active, chase, applyGeometry]);
+
+  const hostClass = [
+    "ssp-sparkle-host",
+    active && "ssp-sparkle-active",
+    active && chase && "ssp-sparkle-chased",
+    working && "ssp-sparkle-working",
+    reduced && "ssp-reduced-motion",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
-    <div className={hostClass}>
+    <div className={hostClass} ref={hostRef}>
       {active ? (
         <div
-          className={`ssp-particle-pen${reduced ? " ssp-reduced-motion" : ""}`}
+          className="ssp-particle-pen"
           aria-hidden="true"
           data-testid="ssp-particle-pen"
           style={penStyle}
@@ -101,6 +173,9 @@ export function SparklePen({
         </div>
       ) : null}
       {children}
+      {active && chase ? (
+        <span className="ssp-sparkle-chase" aria-hidden="true" data-testid="ssp-sparkle-chase" />
+      ) : null}
     </div>
   );
 }
