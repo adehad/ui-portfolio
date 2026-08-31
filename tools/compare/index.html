@@ -14,7 +14,8 @@
         --accent: #4fd1c5;
         --warn: #ffb4a2;
         --wipe: 50%;
-        --onion: 1;
+        --split: 50%;
+        --onion: 0.5;
         --scale: 1;
         --logical-w: 1280px;
         --logical-h: 800px;
@@ -178,7 +179,7 @@
       }
 
       #pane-after {
-        clip-path: inset(0 0 0 var(--wipe));
+        clip-path: inset(0 0 0 var(--split));
       }
 
       body[data-mode="onion"] #pane-after {
@@ -190,7 +191,7 @@
         position: absolute;
         top: 0;
         bottom: 0;
-        left: var(--wipe);
+        left: var(--split);
         width: 2px;
         margin-left: -1px;
         background: var(--accent);
@@ -487,12 +488,15 @@
         }
       }
 
-      function storyLabel(entry) {
-        const title = String(entry.title || "")
+      function storyPath(entry) {
+        const segments = String(entry.title || "")
           .replace(/^\d+\s+/, "")
-          .replace(/\//g, " / ");
+          .split("/")
+          .map((s) => s.trim())
+          .filter(Boolean);
         const name = String(entry.name || "");
-        return name && name !== "Default" ? `${title} / ${name}` : title;
+        if (name && name !== "Default") segments.push(name);
+        return segments;
       }
 
       async function populateStories() {
@@ -500,17 +504,28 @@
         const paired = b && a ? Object.keys(b).filter((id) => id in a) : [];
         const ids = paired.length ? paired : [state.story];
         el.story.replaceChildren();
+        const groups = new Map();
         for (const id of ids) {
-          const option = document.createElement("option");
-          option.value = id;
-          option.textContent = b && b[id] ? storyLabel(b[id]) : id;
-          el.story.append(option);
+          const path = b && b[id] ? storyPath(b[id]) : [id];
+          const group = path.length > 1 ? path[0] : "";
+          const leaf = path.length > 1 ? path.slice(1).join(" / ") : path[0];
+          if (!groups.has(group)) groups.set(group, []);
+          groups.get(group).push({ id, leaf });
         }
         if (!ids.includes(state.story)) {
-          const option = document.createElement("option");
-          option.value = state.story;
-          option.textContent = state.story;
-          el.story.append(option);
+          if (!groups.has("")) groups.set("", []);
+          groups.get("").push({ id: state.story, leaf: state.story });
+        }
+        for (const [group, items] of groups) {
+          const parent = group ? document.createElement("optgroup") : el.story;
+          if (group) parent.label = group;
+          for (const item of items) {
+            const option = document.createElement("option");
+            option.value = item.id;
+            option.textContent = item.leaf;
+            parent.append(option);
+          }
+          if (group) el.story.append(parent);
         }
         el.story.value = state.story;
       }
@@ -594,10 +609,11 @@
       function paint() {
         el.body.dataset.mode = state.mode;
         el.root.style.setProperty("--wipe", `${state.wipe}%`);
-        el.root.style.setProperty("--onion", String(1 - state.wipe / 100));
+        el.root.style.setProperty("--split", `${100 - state.wipe}%`);
+        el.root.style.setProperty("--onion", String(state.wipe / 100));
         el.wipe.value = String(state.wipe);
-        el.readout.textContent = `${state.wipe}%`;
-        el.wipe.setAttribute("aria-valuetext", `${state.wipe}% before, ${100 - state.wipe}% after`);
+        el.readout.textContent = `${state.wipe}% after`;
+        el.wipe.setAttribute("aria-valuetext", `${100 - state.wipe}% before, ${state.wipe}% after`);
         el.modeWipe.setAttribute("aria-pressed", String(state.mode === "wipe"));
         el.modeOnion.setAttribute("aria-pressed", String(state.mode === "onion"));
       }
