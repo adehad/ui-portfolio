@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "../cases/case-study-viewer/tokens.css";
+@import "../cases/filter-builder/tokens.css";
 
 @source "../";
 @source "../../.storybook";

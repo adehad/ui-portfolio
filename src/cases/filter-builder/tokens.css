@@ -1,0 +1,87 @@
+/* Design tokens for the filter-builder case. Tailwind v4 flattens every @theme
+   block in the bundle into one namespace, so every token carries a `qb-`
+   segment and every custom utility starts with `qb-`. */
+@theme {
+  --font-qb-sans: "Open Sans", Arial, Helvetica, sans-serif;
+
+  --color-qb-bg: #f6f7f9;
+  --color-qb-surface: #ffffff;
+  --color-qb-surface-2: #eef0f3;
+  --color-qb-line: #d7dbe1;
+  --color-qb-fg: #21262e;
+  --color-qb-fg-muted: #626b78;
+  --color-qb-accent: #2563c4;
+  --color-qb-accent-tint: #e8effb;
+  --color-qb-danger: #b3362e;
+
+  --radius-qb-sm: 6px;
+  --radius-qb-md: 10px;
+
+  --text-qb-caption: 13px;
+  --text-qb-body: 15px;
+  --text-qb-title: 24px;
+}
+
+/* Root surface for the case: what a host app would put on body, so the case
+   carries its own baseline inside Storybook. */
+@utility qb-root {
+  color-scheme: light;
+  font-family: var(--font-qb-sans);
+  font-size: var(--text-qb-body);
+  color: var(--color-qb-fg);
+  background: var(--color-qb-bg);
+  -webkit-font-smoothing: antialiased;
+
+  & :focus-visible {
+    outline: 2px solid var(--color-qb-accent);
+    outline-offset: 1px;
+  }
+}
+
+/* Shared chrome for <select> and <input>. */
+@utility qb-field {
+  height: 32px;
+  padding: 0 8px;
+  font-size: var(--text-qb-body);
+  color: var(--color-qb-fg);
+  background: var(--color-qb-surface);
+  border: 1px solid var(--color-qb-line);
+  border-radius: var(--radius-qb-sm);
+}
+
+@utility qb-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  font-size: var(--text-qb-body);
+  color: var(--color-qb-fg);
+  background: var(--color-qb-surface);
+  border: 1px solid var(--color-qb-line);
+  border-radius: var(--radius-qb-sm);
+
+  &:hover {
+    background: var(--color-qb-surface-2);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+  }
+}
+
+@utility qb-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: qb-spin 0.7s linear infinite;
+}
+
+@keyframes qb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
