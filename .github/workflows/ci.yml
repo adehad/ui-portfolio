@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [config, before, after]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - run: bun install --frozen-lockfile
+
+      - run: bun run lint
+      - run: bun run fmt:check
+      - run: bun run typecheck
+      - run: bun run test
+      - run: bun run build-storybook
+
+      - name: Prove a narrowed build carries one case
+        if: github.ref_name != 'config'
+        run: bun run check:showcase
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: storybook-${{ github.ref_name }}
+          path: storybook-static
+          retention-days: 7
+
+  publish:
+    needs: check
+    if: github.ref_name == 'before' || github.ref_name == 'after'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Chromatic walks git history to pick which earlier build is the baseline.
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: storybook-${{ github.ref_name }}
+          path: storybook-static
+
+      - uses: chromaui/action@v1
+        env:
+          CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+        with:
+          storybookBuildDir: storybook-static
+          exitZeroOnChanges: true
