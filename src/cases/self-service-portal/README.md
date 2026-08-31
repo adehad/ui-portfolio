@@ -50,11 +50,74 @@ when several pens stack.
 Reduced motion drops both animations and keeps the glow. It is read in JavaScript through
 `matchMedia` so the resulting class can be asserted, with the media query as a fallback.
 
+### The border chase
+
+`chase` sends a spark round the host's edge as well as through the field, which keeps the mark
+readable once a control's own background has swallowed most of the stars. The ring is a
+`conic-gradient`, and what moves is `--ssp-chase-p`, a plain 0 to 1 that only interpolates because
+`@property` registers it; an unregistered custom property is not animatable.
+
+The angle is computed from that parameter rather than animated itself. Sweeping an angle at a
+constant rate is what makes a spark crawl along a long edge and then bolt round a corner, because
+equal angles cover very unequal distances on a wide box: on the demo's 420x128 card the border is
+64px away at the top and 210px away at the side. So two `clamp`ed sinusoids walk a rectangle's
+edges with ramps and holds, and `atan2` reads that point back as an angle. `chaseGeometry` measures
+the host and sets the aspect and the two ramp constants, so the ring stays even while the demo's
+width slider is dragged.
+
+Measured by walking the border numerically, the tuned pair takes the speed spread on that card from
+11.8x to 8.0x. `chaseGeometry` documents a ratio that scores 2.5x on the same measurement, so the
+constants are worth revisiting before anyone reaches for a different technique.
+
+Ported from `adehad/cv`, with one correction: the source feeds `atan2` straight into the gradient,
+but `atan2` returns the angle from the x axis while a conic gradient measures from 12 o'clock, so
+the ring needs `90deg +`. Without it the correction lands a quarter turn from the edge it was
+computed for, which on a wide box is worse than not correcting at all. The source's own
+`--spark-kx: 0.2` is what that misalignment costs: it works by flattening the walk until the
+sideways correction nearly stops.
+
+Two masks cut the gradient down to a ring: one covers the whole box, one covers the content box,
+and `mask-composite: exclude` leaves the padding band between them. That is the part the source's
+version could not do. The CV widget stacks a filled element behind the box and covers its middle
+with an inset backdrop, which needs the host's own background colour and so cannot sit behind
+children that paint their own. `working` shortens the spin from 3.6s to 0.9s while a value settles.
+
+Reduced motion cannot simply stop the spin, because a stopped gradient parks one bright arc on
+whichever corner it reached. The ring flattens to an even outline instead, and so does the
+`@supports` fallback for a browser without `atan2` in a gradient: rotating the ring element instead
+would swing it off a host that is not square.
+
+The ring sits `--ssp-chase-inset` outside the host and carries `--ssp-radius` plus that inset, so
+it traces the host's corners rather than cutting across them. `--ssp-radius` is the host's own
+corner radius, which is why one number drives both: a host and a ring that disagreed on radius
+would show the spark leaving the edge on every corner. The demo's shape control sets it from 0 for
+a square edge to 999px for a pill, which is where the chase reads best, and its thickness and
+inset controls drive `--ssp-chase-width` and `--ssp-chase-inset`.
+
+`starScale` multiplies every star's size. The form leaves it at 1; the component demo runs at 2,
+because a field tuned to sit quietly behind a select is too faint to read on its own.
+
+### The scrambled reveal
+
+`ScrambleText` churns each character through a glyph pool and locks the value in left to right,
+ported from the same file's contact decrypt. `scramble.ts` holds the parts that need no clock and no
+React, so the frames are asserted directly: length is preserved, so the line never reflows, and the
+structural characters in `KEEP` hold their place, which is what makes a hyphenated name read as one
+value settling rather than as a row of noise.
+
+`frame` is null whenever no reveal is playing, so the value is what renders by default and no
+effect has to write it back. A reveal runs only when `value` changes, which also means a fresh
+mount is never caught mid-scramble. `onRunningChange` reports both edges of a run; the demo feeds it
+straight into the pen's `working`, so the chase quickens while the characters churn.
+
 ### Two changes the source does not have
 
 The source spawns the field from `Math.random()`. Here the randomness comes from a small seeded
-generator keyed on `seedKey`, so a rebuild lays the same stars in the same places. Chromatic
-compares pixels, and a field that respawned per build would diff on every run.
+generator in `seededRandom.ts`, keyed on `seedKey`, so a rebuild lays the same stars in the same
+places and replays the same glyphs. Chromatic compares pixels, and anything that respawned per
+build would diff on every run. The demo's names come from their own seeded faker instance rather
+than the global one `users.ts` and `groups.ts` share, so its first name is fixed without shifting
+their data.
 
 The overlay is absolutely positioned, but an absolutely positioned box still counts toward the
 scrollable overflow of its ancestors, and the field is wider than the control it marks. `.ssp-root`
@@ -79,8 +142,9 @@ The two systems share one Storybook and do not collide:
 - `.oxlintrc.json` tells `better-tailwindcss/no-unknown-classes` to ignore `^ssp-`. Every class in
   this case is a real SCSS class the linter has no way to resolve from the Tailwind entry point.
 
-`SparklePen.scss` is the one stylesheet that does not nest under `.ssp-root`. Its classes are all
-prefixed, and the component has to work wherever it is mounted, including the isolated story.
+`SparklePen.scss` and `ScrambleText.scss` are the two stylesheets that do not nest under
+`.ssp-root`. Their classes are all prefixed, and both components have to work wherever they are
+mounted, including the isolated story.
 
 ## Namespace
 
@@ -88,9 +152,11 @@ prefixed, and the component has to work wherever it is mounted, including the is
 
 - Class names: `ssp-root`, `ssp-post-form`, `ssp-form-control`, `ssp-row`, `ssp-col`,
   `ssp-destination-selector`, `ssp-group-cascade`, `ssp-route-preview`, `ssp-sparkle-host`,
-  `ssp-particle-pen`, `ssp-user-select`.
+  `ssp-particle-pen`, `ssp-sparkle-chase`, `ssp-scramble`, `ssp-user-select`.
 - Theme classes: `ssp-light-theme`, `ssp-dark-theme`.
-- Custom properties: `--ssp-bkg`, `--ssp-spark`, `--ssp-error-color`, and the per-star
+- Custom properties: `--ssp-bkg`, `--ssp-spark`, `--ssp-error-color`, `--ssp-radius`, the
+  chase's `--ssp-chase-p`, `--ssp-chase-aspect`, `--ssp-chase-kx`, `--ssp-chase-ky`,
+  `--ssp-chase-width`, `--ssp-chase-inset` and `--ssp-chase-period`, and the per-star
   `--ssp-x`, `--ssp-duration`, `--ssp-twinkle-delay` and the rest. A custom property is global
   whichever selector declares it.
 - localStorage keys: `ssp-dark-mode`, `ssp-userId`. The source uses `dark-mode` and `userId`; one
