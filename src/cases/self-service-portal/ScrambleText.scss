@@ -1,0 +1,30 @@
+/* Prefixed and unnested like SparklePen.scss, so the component works wherever it
+   is mounted. --ssp-spark comes from the theme block; the currentColor fallback
+   covers a host without one. */
+
+.ssp-scramble {
+  font-family: Consolas, ui-monospace, monospace;
+  letter-spacing: 0.04em;
+
+  /* Glyph widths differ enough to jitter the line even in a monospace face when
+     digits are proportional. */
+  font-variant-numeric: tabular-nums;
+  transition: color 0.25s;
+}
+
+.ssp-scramble-running {
+  color: var(--ssp-spark, currentColor);
+  text-shadow: 0 0 6px color-mix(in srgb, var(--ssp-spark, currentColor) 65%, transparent);
+}
+
+.ssp-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

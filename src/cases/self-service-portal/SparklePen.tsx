@@ -1,31 +1,10 @@
 import { type CSSProperties, type ReactNode, useMemo } from "react";
 import "@/cases/self-service-portal/SparklePen.scss";
+import { hashSeed, makeRandom } from "@/cases/self-service-portal/seededRandom";
 
 /** 4-point star on a 15x15 viewBox, taken from adehad/cv web/_static/contact.js. */
 const STAR_PATH =
   "M6.937 3.846L7.75 1L8.563 3.846C8.773 4.581 9.167 5.251 9.708 5.791C10.248 6.332 10.918 6.726 11.653 6.936L14.5 7.75L11.654 8.563C10.919 8.773 10.249 9.167 9.709 9.708C9.168 10.248 8.774 10.918 8.564 11.653L7.75 14.5L6.937 11.654C6.727 10.919 6.333 10.249 5.792 9.709C5.252 9.168 4.582 8.774 3.847 8.564L1 7.75L3.846 6.937C4.581 6.727 5.251 6.333 5.791 5.792C6.332 5.252 6.726 4.582 6.936 3.847L6.937 3.846Z";
-
-/** The star field is randomised from the seed key rather than from Math.random,
-    so a rebuild lays the same stars in the same places. Chromatic compares
-    pixels, and a field that respawned per build would diff on every run. */
-function hashSeed(seed: string): number {
-  let hash = 0x81_1c_9d_c5;
-  for (let i = 0; i < seed.length; i++) {
-    hash = Math.imul(hash ^ seed.charCodeAt(i), 0x01_00_01_93);
-  }
-  return hash >>> 0;
-}
-
-/** mulberry32: small, fast, and good enough to scatter stars. */
-function makeRandom(seed: number): () => number {
-  let state = seed;
-  return () => {
-    state = (state + 0x6d_2b_79_f5) | 0;
-    let t = Math.imul(state ^ (state >>> 15), 1 | state);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4_294_967_296;
-  };
-}
 
 type Particle = { id: string; style: CSSProperties };
 
