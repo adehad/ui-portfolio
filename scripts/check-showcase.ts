@@ -73,10 +73,10 @@ function parseArgs(argv: string[]): { names: string[]; dir: string | null } {
   const names: string[] = [];
   let dir: string | null = null;
 
-  for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i];
+  const rest = [...argv];
+  for (let arg = rest.shift(); arg !== undefined; arg = rest.shift()) {
     if (arg === "--dir") {
-      dir = argv[++i] ?? null;
+      dir = rest.shift() ?? null;
       if (dir === null) throw new Error("--dir needs a path");
     } else if (arg.startsWith("-")) {
       throw new Error(`unknown option ${arg}`);

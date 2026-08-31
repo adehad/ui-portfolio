@@ -2,9 +2,18 @@
   "compilerOptions": {
     "target": "ES2022",
     "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "allowUnusedLabels": false,
+    "noFallthroughCasesInSwitch": true,
+    "allowUnreachableCode": false,
+    "noUncheckedIndexedAccess": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "erasableSyntaxOnly": true,
+    "noImplicitOverride": true,
+    "exactOptionalPropertyTypes": true,
     "noEmit": true,
     "module": "esnext",
     "moduleResolution": "bundler",
@@ -21,6 +30,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src", ".storybook", "*.ts", "*.mts"],
+  "include": ["src", ".storybook", "scripts", "*.ts", "*.mts"],
   "exclude": ["node_modules", "storybook-static"]
 }
