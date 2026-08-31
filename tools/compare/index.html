@@ -379,9 +379,6 @@
       const CONFIG = {
         before: "http://localhost:6101",
         after: "http://localhost:6102",
-        // A story ID is identical on both branches by design, which is the only
-        // reason one id can address both iframes.
-        story: "01-case-study-viewer-passcode-gate--default",
         logicalWidth: 1280,
         logicalHeight: 800,
         loadTimeoutMs: 15000,
@@ -396,7 +393,7 @@
       const state = {
         before: query.get("before") || CONFIG.before,
         after: query.get("after") || CONFIG.after,
-        story: query.get("story") || CONFIG.story,
+        story: query.get("story") || "",
         mode: query.get("mode") === "onion" ? "onion" : "wipe",
         wipe: clampWipe(query.get("wipe") ?? 50),
       };
@@ -455,7 +452,10 @@
           const retry = document.createElement("button");
           retry.type = "button";
           retry.textContent = "Retry";
-          retry.addEventListener("click", () => loadSide(name));
+          retry.addEventListener("click", () => {
+            indexCache.delete(state[name]);
+            loadSide(name);
+          });
           box.append(text, retry);
           el.faults.append(box);
         }
@@ -476,16 +476,42 @@
         renderFaults();
       }
 
-      async function storyIndex(base) {
-        try {
-          const root = new URL(base.endsWith("/") ? base : `${base}/`);
-          const res = await fetch(new URL("index.json", root), { cache: "no-store" });
-          if (!res.ok) return null;
-          const body = await res.json();
-          return body && typeof body.entries === "object" ? body.entries : null;
-        } catch {
-          return null;
-        }
+      const indexCache = new Map();
+
+      async function readIndex(base) {
+        const cached = indexCache.get(base);
+        if (cached) return cached;
+        const pending = (async () => {
+          let root;
+          try {
+            root = new URL(base.endsWith("/") ? base : `${base}/`);
+          } catch {
+            return { ok: false, why: `${base || "(blank)"} is not a URL` };
+          }
+          if (root.pathname !== "/" || root.search) {
+            return {
+              ok: false,
+              why: `${base} has a path or a query. A published Storybook root looks like https://<branch>--<appid>.chromatic.com`,
+            };
+          }
+          try {
+            const res = await fetch(new URL("index.json", root), { cache: "no-store" });
+            if (!res.ok)
+              return { ok: false, why: `${root.origin} answered ${res.status} for index.json` };
+            const body = await res.json();
+            if (!body || typeof body.entries !== "object") {
+              return {
+                ok: false,
+                why: `${root.origin} answered, but it is not a published Storybook`,
+              };
+            }
+            return { ok: true, origin: root.origin, entries: body.entries };
+          } catch {
+            return { ok: false, why: `${root.origin} did not answer, or refused the request` };
+          }
+        })();
+        indexCache.set(base, pending);
+        return pending;
       }
 
       function storyPath(entry) {
@@ -500,9 +526,15 @@
       }
 
       async function populateStories() {
-        const [b, a] = await Promise.all([storyIndex(state.before), storyIndex(state.after)]);
-        const paired = b && a ? Object.keys(b).filter((id) => id in a) : [];
-        const ids = paired.length ? paired : [state.story];
+        const [br, af] = await Promise.all([readIndex(state.before), readIndex(state.after)]);
+        const b = br.ok ? br.entries : null;
+        const paired = b && af.ok ? Object.keys(b).filter((id) => id in af.entries) : [];
+        if (!state.story && paired.length) {
+          state.story = paired[0];
+          writeQuery();
+          reload();
+        }
+        const ids = paired.length ? paired : state.story ? [state.story] : [];
         el.story.replaceChildren();
         const groups = new Map();
         for (const id of ids) {
@@ -531,38 +563,13 @@
       }
 
       async function diagnose(name) {
-        const base = state[name];
-        let root;
-        try {
-          root = new URL(base.endsWith("/") ? base : `${base}/`);
-        } catch {
+        const result = await readIndex(state[name]);
+        if (!result.ok) {
+          markFault(name, result.why);
           return;
         }
-        if (root.pathname !== "/" || root.search) {
-          markFault(
-            name,
-            `${base} has a path or a query. A published Storybook root looks like https://<branch>--<appid>.chromatic.com`,
-          );
-          return;
-        }
-        let index;
-        try {
-          const res = await fetch(new URL("index.json", root), { cache: "no-store" });
-          if (!res.ok) {
-            markFault(name, `${root.origin} answered ${res.status} for index.json`);
-            return;
-          }
-          index = await res.json();
-        } catch {
-          markFault(name, `${root.origin} did not answer, or refused the request`);
-          return;
-        }
-        if (!index || typeof index.entries !== "object") {
-          markFault(name, `${root.origin} answered, but it is not a published Storybook`);
-          return;
-        }
-        if (!index.entries[state.story]) {
-          markFault(name, `${root.origin} has no story ${state.story}`);
+        if (!result.entries[state.story]) {
+          markFault(name, `${result.origin} has no story ${state.story}`);
           return;
         }
         clearFault(name);
@@ -672,6 +679,8 @@
         state.before = el.urlBefore.value.trim();
         state.after = el.urlAfter.value.trim();
         writeQuery();
+        indexCache.clear();
+        void populateStories();
         reload();
       });
 
