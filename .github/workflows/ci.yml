@@ -65,3 +65,35 @@ jobs:
         with:
           storybookBuildDir: storybook-static
           exitZeroOnChanges: true
+
+  pages:
+    needs: check
+    if: github.ref_name == 'config'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Stage the comparison page on its own
+        run: |
+          mkdir site
+          cp tools/compare/index.html site/index.html
+          # Everything in this directory reaches an indexable URL, so a stray
+          # file here would publish work this repo otherwise keeps to itself.
+          test "$(find site -type f | wc -l)" -eq 1
+
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v5
